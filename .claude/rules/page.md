@@ -1,30 +1,30 @@
 ---
-description: "페이지 패턴 — Next.js App Router 페이지 수직 슬라이스(page.tsx + hooks/ + components/ + styles/) 표준과 pageVariants tv() 규약."
+description: "페이지 패턴 — Vite+React 수직 슬라이스(src/pages/{Name}Page/ = {Name}Page.tsx + hooks/ + components/ + styles/) 표준과 pageVariants tv() 규약."
 paths:
-  - "app/**/page.tsx"
-  - "app/**/styles/*.style.ts"
-  - "app/**/hooks/use*.ts"
-  - "app/**/components/**/*.tsx"
+  - "src/pages/**/*Page.tsx"
+  - "src/pages/**/styles/*.style.ts"
+  - "src/pages/**/hooks/use*.ts"
+  - "src/pages/**/components/**/*.tsx"
 ---
 
-# 페이지 패턴 — 수직 슬라이스 (Next.js App Router)
+# 페이지 패턴 — 수직 슬라이스 (Vite + React)
 
-라우트 하나를 **수직 슬라이스**로 구성한다. 한 라우트에 필요한 상태·뷰·스타일이 그 라우트 폴더 안에서 완결된다.
+라우트 하나를 **수직 슬라이스**로 구성한다(`src/pages/{Name}Page/`). 한 라우트에 필요한 상태·뷰·스타일이 그 폴더 안에서 완결된다. 라우트 등록은 react-router v7(`/` → SearchPage, `/favorites` → FavoritesPage).
 
 ## 파일별 역할
 
 | 파일                     | 역할                                                                 |
 | ------------------------ | -------------------------------------------------------------------- |
-| `page.tsx`               | **얇은 조립** — Context.Provider + 컴포넌트 배치, meta/SEO, SSR. 비즈니스 로직 없음 |
-| `hooks/use{Route}.ts`    | **페이지 상태 전부** — query/filter/form/handler 보유 + Context value 생성 |
+| `{Name}Page.tsx`         | **얇은 조립** — Context.Provider + 컴포넌트 배치. 비즈니스 로직 없음 |
+| `hooks/use{Name}.ts`     | **페이지 상태 전부** — query/filter/form/handler 보유 + Context value 생성 |
 | `components/*.tsx`       | **Context 소비만** — 자체 데이터 훅(useQuery 등) 호출 금지            |
 | `styles/{name}.style.ts` | **tv 슬롯** — 구조적 레이아웃 (wrapper/container/header/content/footer) |
 
 ## 예시 트리
 
 ```
-app/search/
-├── page.tsx                    ← SearchContext.Provider + <SearchScreen />
+src/pages/SearchPage/
+├── SearchPage.tsx              ← SearchContext.Provider + <SearchScreen />
 ├── hooks/
 │   └── useSearch.ts            ← nuqs 필터 + useBookSearchQuery + searchHandler + Context
 ├── components/
@@ -39,10 +39,10 @@ app/search/
 데이터 계층(라우트 밖, 공유):
 
 ```
-lib/api/client/http.ts          ← axios 인스턴스 (카카오 baseURL + Authorization 헤더)
-lib/api/books/api.ts            ← searchBooks() 등 순수 요청 함수
-lib/api/books/api.queries.ts    ← useBookSearchQuery 등 wrapper hook
-lib/api/shared/queryKeys.ts     ← bookKeys 팩토리
+src/lib/api/client/http.ts      ← axios 인스턴스 (dapi.kakao.com baseURL + KakaoAK Authorization 헤더)
+src/lib/api/books/api.ts        ← searchBooks() 등 순수 요청 함수 (카카오 { documents, meta } 그대로 반환)
+src/lib/api/books/api.queries.ts ← useBookSearchQuery 등 wrapper hook
+src/lib/api/shared/queryKeys.ts ← bookKeys 팩토리
 ```
 
 ## pageVariants — `tv()` 규약
@@ -51,13 +51,13 @@ lib/api/shared/queryKeys.ts     ← bookKeys 팩토리
 | ----------------- | -------------------- | ------------------------------------------------ |
 | `hooks/useXxx.ts` | 비즈니스 로직        | filter, query, handler, state                    |
 | `styles/page.style.ts` | 구조적 레이아웃 (tv) | wrapper, container, header, content, footer      |
-| `page.tsx`        | 조합 + Next.js 역할  | 컴포넌트 배치, 인라인 세부 스타일, meta/SEO, SSR |
+| `{Name}Page.tsx`  | 조합                 | 컴포넌트 배치, 인라인 세부 스타일               |
 
 규칙:
 
 - tv export명은 모든 `page.style.ts`에서 `pageVariants`로 통일 (경로 자체가 구분)
 - slots에는 **구조적 레이아웃만** (wrapper, container, header, content, footer)
-- 세부 디자인 요소(`<h1>`, `<p>`, 폼 필드 스타일)는 `page.tsx`에서 인라인
+- 세부 디자인 요소(`<h1>`, `<p>`, 폼 필드 스타일)는 `{Name}Page.tsx`에서 인라인
 - `const styles = pageVariants()`는 컴포넌트 외부에서 호출 (참조 안정성)
 - 색상·간격·radius 등은 **`@theme` 시맨틱 토큰**만 사용 (raw Tailwind 색상 금지 — 아래 참조)
 
@@ -126,9 +126,9 @@ export type PageVariants = typeof pageVariants;
 
 ## 파일 구조 규약
 
-- `components/` (루트) = **2곳 이상의 라우트에서 import되는** 공유 컴포넌트만 (`components/ui/`, `components/layout/` 등)
-- 단일 라우트에서만 쓰는 컴포넌트 → 해당 라우트의 `components/` 하위
-- 라우트는 항상 **폴더 구조** (`app/search/page.tsx`)
+- `src/components/` (루트) = **2곳 이상의 라우트에서 import되는** 공유 컴포넌트만 (`src/components/ui/`, `src/components/layout/` 등)
+- 단일 라우트에서만 쓰는 컴포넌트 → 해당 페이지 슬라이스의 `components/` 하위
+- 페이지는 항상 **폴더 슬라이스 구조** (`src/pages/SearchPage/SearchPage.tsx`), 라우트 등록은 react-router
 - 자체 컴포넌트를 불필요하게 래핑하는 중간 레이어 생성 금지
 
 ---
@@ -158,6 +158,6 @@ const topBooks = useMemo(() => data.documents.slice(0, 10), [data.documents]);
 
 1. **타입 체크**: `pnpm typecheck` (또는 `tsc --noEmit`)
 2. **린트**: `pnpm lint`
-3. **브라우저 확인**: `pnpm dev` → `http://localhost:3000/search` 등 컴포넌트 사용 페이지
+3. **브라우저 확인**: `pnpm dev` → `http://localhost:3000/`(검색)·`/favorites`(찜) 등 컴포넌트 사용 페이지
 4. **렌더 루프 확인**: 브라우저 콘솔에 반복 로그, CPU 급등, 페이지 멈춤 없는지
 5. **상호작용 확인**: 검색 입력, 찜 토글, 페이지 이동 등 주요 인터랙션 정상 동작

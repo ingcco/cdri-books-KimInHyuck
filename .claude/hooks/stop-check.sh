@@ -24,13 +24,13 @@ fi
 
 SUGGESTIONS=""
 
-# === 보안 검증 필요 여부 (카카오 프록시 Route Handler / 미들웨어) ===
-if echo "$CHANGED" | grep -qE 'app/api/.*/route\.ts' || echo "$CHANGED" | grep -qE '(^|/)middleware\.ts'; then
-  SUGGESTIONS+="🔒 API Route/미들웨어 변경 감지 → /security 실행 권장\n"
+# === 보안 검증 필요 여부 (카카오 직접 호출 API 계층) ===
+if echo "$CHANGED" | grep -qE 'src/lib/api/'; then
+  SUGGESTIONS+="🔒 API 계층(src/lib/api) 변경 감지 → /security 실행 권장\n"
 fi
 
 # === UI 검증 필요 여부 (페이지·컴포넌트) ===
-if echo "$CHANGED" | grep -qE '(app|components)/.*\.tsx$'; then
+if echo "$CHANGED" | grep -qE 'src/(pages|components)/.*\.tsx$'; then
   SUGGESTIONS+="🎨 UI/페이지 변경 감지 → /review-ui 실행 권장\n"
 fi
 

@@ -1,11 +1,8 @@
 ---
 description: "코딩 컨벤션 — TypeScript ES Modules, 파일명 규약(PascalCase/camelCase), Export 패턴, 페이지 수직 슬라이스, 주석 한글."
 paths:
-  - "app/**/*.ts"
-  - "app/**/*.tsx"
-  - "components/**/*.ts"
-  - "components/**/*.tsx"
-  - "lib/**/*.ts"
+  - "src/**/*.ts"
+  - "src/**/*.tsx"
 ---
 
 # 코딩 컨벤션 상세
@@ -14,7 +11,7 @@ paths:
 
 ## 스택 요약
 
-Next.js App Router + TypeScript(strict) · Tailwind v4(`@theme` 토큰) + tailwind-variants(`tv`) · React Query v5 · nuqs · react-hook-form + zod · axios · 자체 UI 컴포넌트 · Vitest + MSW · Playwright · pnpm(포트 3000).
+Vite + React 19 CSR + react-router v7 + TypeScript(strict) · Tailwind v4(`@theme` 토큰) + tailwind-variants(`tv`) · React Query v5 · nuqs(react-router 어댑터) · react-hook-form + zod · axios(`dapi.kakao.com` 직접 호출) · 자체 UI 컴포넌트 · Vitest + MSW · Playwright · pnpm(포트 3000).
 
 ## 타입 컨벤션
 
@@ -37,10 +34,10 @@ export type ButtonVariants = typeof buttonVariants;
 라우트 하나를 **수직 슬라이스**로 구성한다. 상세 파일별 역할·예시 트리는 `.claude/rules/page.md` SOT.
 
 ```
-app/{route}/
-├── page.tsx              ← 얇은 조립: Context.Provider + 컴포넌트 배치 (비즈니스 로직 없음)
+src/pages/{Name}Page/
+├── {Name}Page.tsx        ← 얇은 조립: Context.Provider + 컴포넌트 배치 (비즈니스 로직 없음)
 ├── hooks/
-│   └── use{Route}.ts     ← 페이지 상태 전부(query/filter/form/handler) + Context value 생성
+│   └── use{Name}.ts      ← 페이지 상태 전부(query/filter/form/handler) + Context value 생성
 ├── components/           ← Context 소비만 (자체 데이터 훅 금지)
 └── styles/
     └── {name}.style.ts   ← tv 슬롯 (pageVariants 등)
@@ -49,16 +46,16 @@ app/{route}/
 데이터 계층:
 
 ```
-lib/api/client/http.ts          ← axios 인스턴스 (카카오 baseURL + Authorization 헤더)
-lib/api/{domain}/api.ts         ← 순수 요청 함수 (axios 호출만)
-lib/api/{domain}/api.queries.ts ← useQuery/useMutation wrapper hook
-lib/api/shared/queryKeys.ts     ← 쿼리 키 팩토리
+src/lib/api/client/http.ts          ← axios 인스턴스 (dapi.kakao.com baseURL + KakaoAK Authorization 헤더)
+src/lib/api/{domain}/api.ts         ← 순수 요청 함수 (axios 호출만, 카카오 응답 그대로 반환)
+src/lib/api/{domain}/api.queries.ts ← useQuery/useMutation wrapper hook
+src/lib/api/shared/queryKeys.ts     ← 쿼리 키 팩토리
 ```
 
 **규칙**:
 
-- `components/`는 페이지 Context를 **소비만** 한다 — 자체 `useQuery`/`useXxxQuery` 호출 금지(데이터 훅은 `hooks/use{Route}.ts`에 한 곳)
-- 데이터 fetch·필터·핸들러 상태는 전부 `hooks/use{Route}.ts`에 모으고, `page.tsx`가 그 값을 Context로 주입
+- `components/`는 페이지 Context를 **소비만** 한다 — 자체 `useQuery`/`useXxxQuery` 호출 금지(데이터 훅은 `hooks/use{Name}.ts`에 한 곳)
+- 데이터 fetch·필터·핸들러 상태는 전부 `hooks/use{Name}.ts`에 모으고, `{Name}Page.tsx`가 그 값을 Context로 주입
 
 ## 페이지 컴포넌트 선언 방식
 
@@ -73,9 +70,9 @@ export default SearchPage;
 export default function SearchPage() { ... }
 ```
 
-## page.tsx 조건부 렌더링 — 단일 return
+## `{Name}Page.tsx` 조건부 렌더링 — 단일 return
 
-`page.tsx`는 early return 금지. 로딩·에러·빈 상태를 포함한 모든 분기는 단일 `return ()` 안에서 JSX 조건부 렌더링으로 처리한다.
+페이지 컴포넌트(`{Name}Page.tsx`)는 early return 금지. 로딩·에러·빈 상태를 포함한 모든 분기는 단일 `return ()` 안에서 JSX 조건부 렌더링으로 처리한다.
 
 ```tsx
 // ✅ 단일 return — 모든 상태를 JSX 안에서 처리
@@ -101,7 +98,7 @@ const SearchPage = () => {
 };
 ```
 
-## 상수 파일 위치 (`app/constants/` 또는 `lib/constants/`)
+## 상수 파일 위치 (`src/constants/` 또는 `src/lib/constants/`)
 
 앱 내 라벨·옵션 상수는 한곳에 모아서 관리한다.
 
@@ -114,18 +111,18 @@ const SearchPage = () => {
 - **Dropdown list·필터 옵션은 상수로** (`dropdownList.{domain}`). **page/컴포넌트에서 `useMemo`로 옵션 배열 생성 금지** — 정적 리스트는 모듈 상수가 참조 안정성 보장 (react.md "단독 useMemo 금지")
 - 3곳 미만 사용 상수는 인라인 허용 — `labels.ts`는 라벨 매핑 전용
 
-## 공유 요청 타입 (`lib/api/shared/request.type.ts`)
+## 공유 요청 타입 (`src/lib/api/shared/request.type.ts`)
 
 페이지네이션이 필요한 목록 요청 파라미터는 `Pageable`을 extend한다.
 
 ```typescript
-// lib/api/shared/request.type.ts
+// src/lib/api/shared/request.type.ts
 export interface Pageable {
   page?: number;
   size?: number;
 }
 
-// lib/api/books/api.ts
+// src/lib/api/books/api.ts
 export interface BookSearchParams extends Pageable {
   query: string;
   target?: SearchTarget;
@@ -133,13 +130,13 @@ export interface BookSearchParams extends Pageable {
 }
 ```
 
-## `lib/api/{domain}/api.ts` 응답 변환 정책
+## `src/lib/api/{domain}/api.ts` 응답 변환 정책
 
-`lib/api/{domain}/api.ts` 함수는 axios 호출 후 **응답을 그대로 반환**한다. 동일 shape인데도 수동 재구성·키 이름 변환·필드 변환을 추가하지 않는다.
+`src/lib/api/{domain}/api.ts` 함수는 axios로 `dapi.kakao.com`을 직접 호출한 뒤 **응답을 그대로 반환**한다. 카카오 `{ documents, meta }` 봉투를 그대로 쓰며(별도 응답 봉투 없음), 동일 shape인데도 수동 재구성·키 이름 변환·필드 변환을 추가하지 않는다.
 
 | 패턴 | 적용 |
 | --- | --- |
-| **A (기본)** — 카카오 응답이 클라이언트 타입과 1:1 정합 | `return res.data;` 직접 반환 (`{ documents, meta }` 그대로) |
+| **A (기본)** — 카카오 응답이 클라이언트 타입과 1:1 정합 | `return res.data;` 직접 반환 (`{ documents, meta }` = `BookSearchData` 그대로) |
 | **B (변환 필요)** — 서버/클라 shape이 실제로 다름 (파생 값 계산, 정렬, 평탄화 등) | 변환 사유를 JSDoc에 명시 + 일관성 유지. React Query `select`에서 변환하는 것이 우선 |
 
 ```typescript
@@ -165,7 +162,7 @@ export async function searchBooks(...): Promise<{ items: Book[]; total: number }
 
 ## 필터/검색 폼 — URL 필터(nuqs) + debounce 패턴
 
-목록 페이지의 **URL 동기화 필터**(검색어·정렬·페이지 등)는 nuqs `useQueryStates`로 관리한다 — URL이 source of truth라 새로고침·뒤로가기·링크 공유에 필터가 복원된다. **상세검색 등 검증이 필요한 폼은 react-hook-form**(아래 "Form 바인딩 — Controller" 절 in react.md). Provider는 루트 layout에 `NuqsAdapter` 1회(`nuqs/adapters/next/app`).
+목록 페이지의 **URL 동기화 필터**(검색어·정렬·페이지 등)는 nuqs `useQueryStates`로 관리한다 — URL이 source of truth라 새로고침·뒤로가기·링크 공유에 필터가 복원된다. **상세검색 등 검증이 필요한 폼은 react-hook-form**(아래 "Form 바인딩 — Controller" 절 in react.md). Provider는 앱 루트에 nuqs **react-router 어댑터**(`NuqsAdapter` from `nuqs/adapters/react-router/v7`) 1회로 감싼다.
 
 ```typescript
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
@@ -198,7 +195,7 @@ const searchHandler = {
 
 **빈 검색어는 fetch를 건너뛴다** — `useBookSearchQuery`에서 `enabled: query.trim().length > 0`으로 게이트(빈 검색어 API 호출 금지).
 
-**page.tsx — value/onChange 직접 바인딩** (URL 필터는 검증 없음 → Controller 불필요):
+**`{Name}Page.tsx` — value/onChange 직접 바인딩** (URL 필터는 검증 없음 → Controller 불필요):
 
 ```tsx
 <Input
@@ -215,7 +212,7 @@ const searchHandler = {
 
 ## Query select — 파생 UI 상태 계산
 
-API 응답에서 파생되는 UI 상태(빈 결과 여부, 다음 페이지 존재 등)는 `useQuery`의 `select`에서 계산한다. page.tsx에서 인라인 계산 금지.
+API 응답에서 파생되는 UI 상태(빈 결과 여부, 다음 페이지 존재 등)는 `useQuery`의 `select`에서 계산한다. 페이지 컴포넌트에서 인라인 계산 금지.
 
 ```typescript
 // ✅ select에서 파생 상태 추가
@@ -227,10 +224,10 @@ useQuery({
   }),
 });
 
-// page.tsx — select 결과를 그대로 사용
+// {Name}Page.tsx — select 결과를 그대로 사용
 {query.data?.hasNoResults && <EmptyResult />}
 
-// ❌ page.tsx에서 파생 상태 계산
+// ❌ 페이지 컴포넌트에서 파생 상태 계산
 const hasNoResults = booksMemo.documents.length === 0;
 ```
 
@@ -341,7 +338,7 @@ export function useBookSearchHook() { ... }
 
 ## 자체 컴포넌트·유틸 우선 사용 (3회 룰)
 
-페이지·도메인 코드에서 새 헬퍼·컴포넌트·훅을 작성하기 전에 이미 `components/ui/`, `lib/utils/`, `hooks/`에 동일 기능이 있는지 먼저 확인한다.
+페이지·도메인 코드에서 새 헬퍼·컴포넌트·훅을 작성하기 전에 이미 `src/components/ui/`, `src/lib/utils/`, `src/hooks/`에 동일 기능이 있는지 먼저 확인한다.
 
 ### 빈도 기준 결정 트리
 
@@ -349,15 +346,15 @@ export function useBookSearchHook() { ... }
 | --------------------- | --------------------------------------------------------------------- |
 | **이미 있음**         | **자체 구현 금지** — 기존 함수/컴포넌트 import 의무                    |
 | 1~2회 사용            | 호출처에 인라인 (최소 추상화 원칙 — 3곳 미만 인라인)                   |
-| 3회 이상 사용         | `lib/utils/`·`components/ui/`·`hooks/`로 승격 후 호출처 일괄 교체      |
+| 3회 이상 사용         | `src/lib/utils/`·`src/components/ui/`·`src/hooks/`로 승격 후 호출처 일괄 교체      |
 
-- 날짜 포맷·숫자 콤마·debounce 등 반복 유틸은 자체 재구현하지 말고 `lib/utils/`에 단일 SOT로 두고 재사용. 기본 포맷·옵션은 통일해 표기 일관성 확보
+- 날짜 포맷·숫자 콤마·debounce 등 반복 유틸은 자체 재구현하지 말고 `src/lib/utils/`에 단일 SOT로 두고 재사용. 기본 포맷·옵션은 통일해 표기 일관성 확보
 - 폼 컨트롤(button/input/select 등)은 raw HTML 대신 `components/ui/`의 자체 컴포넌트 사용 — 상세는 `page.md` "Raw HTML 지양"
 
 ### 자체 승격 절차 (3회 이상 누적 시)
 
-1. 호출처 3곳 grep으로 검증 (`grep -rn '동일 패턴' app/ components/`)
-2. `lib/utils/`·`components/ui/`·`hooks/`로 승격
+1. 호출처 3곳 grep으로 검증 (`grep -rn '동일 패턴' src/`)
+2. `src/lib/utils/`·`src/components/ui/`·`src/hooks/`로 승격
 3. 호출처 일괄 교체 + 인라인 잔재 grep 검증
 
 ## JSDoc 컨벤션
@@ -371,6 +368,21 @@ export function useBookSearchHook() { ... }
  */
 export function toComma(value: number, unit?: string): string;
 ```
+
+## 소스 코드 주석 정책 (제출용 레포 — 엄격 적용)
+
+이 레포는 사전과제 제출물이라 소스 코드를 채용 담당자가 직접 읽는다. 기본은 **무주석** — 시스템 원칙("WHY가 비자명할 때만")보다 엄격하게 적용한다.
+
+**절대 금지** (발견 즉시 제거):
+- 작업 과정/세션 서사 — "재검증", "발견", "수정함", 날짜, PAAR 같은 의사결정 로그성 표현
+- Figma 노드 ID, 외부 REST API 조회 근거 등 조사 과정 기록
+- 다른 프로젝트·조직·레포 이름 (참고했더라도 소스에는 남기지 않음)
+
+**허용** (극히 예외적, 짧게):
+- 브라우저/라이브러리 특이 동작 우회처럼 코드만 봐서는 알 수 없는 WHY — 예: `// Safari focus 유실 방지`
+- 과정 설명이 아니라 **현재 코드의 제약 사실**만 서술
+
+과정·근거·의사결정 기록은 `.docs/plans/`(plan+backlog), 세션 리포트, README "AI 협업 방식" 섹션에만 남긴다.
 
 ## 테스트
 

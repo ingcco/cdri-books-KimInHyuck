@@ -59,15 +59,15 @@ pnpm typecheck
 
 ### 4. 네비게이션 연결 검증 (해당 시)
 
-레이아웃/네비게이션 컴포넌트 또는 `page.tsx` 라우트 파일 변경 시:
+레이아웃/네비게이션 컴포넌트 또는 페이지 라우트 등록(`src/main.tsx`) 변경 시:
 
-1. 네비게이션 컴포넌트에서 `href=` 값 추출
-2. 각 href에 대응하는 `app/{route}/page.tsx`가 실제로 존재하는지 확인
+1. 네비게이션 컴포넌트(`NavLink`/`Link`)에서 `to=` 값 추출 (외부 링크 `href=`는 대상 아님 — 예: 구매하기 버튼의 카카오 book url)
+2. 각 `to` 값에 대응하는 라우트가 `src/main.tsx`의 react-router 설정에 실제로 등록돼 있는지 확인
 3. **누락된 라우트 발견 시 → 커밋 차단** + 사용자에게 보고
 
 ```bash
-# 네비게이션에서 href 추출 후 page.tsx 존재 확인
-grep -roh 'href="[^"]*"' app/ components/ | sort -u
+# 네비게이션에서 to= 추출 후 라우터 설정에 등록돼 있는지 확인
+grep -roh 'to="[^"]*"' src/ | sort -u
 ```
 
 ### 5. 브라우저 검증 (해당 시)

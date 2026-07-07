@@ -1,9 +1,7 @@
 ---
 description: "안티패턴 카탈로그(SOT). 새 코드 작성·리뷰 시 참고하는 ❌ Before → ✅ After + WHY 모음."
 paths:
-  - "app/**"
-  - "components/**"
-  - "lib/**"
+  - "src/**"
 ---
 
 # 안티패턴 카탈로그
@@ -18,8 +16,8 @@ paths:
 | --- | ------------------- | --------------------------------- | ------------------------------- |
 | CS  | 조건/분기 단순화    | 전 영역                           | 자체 + FF 가독성                |
 | PR  | 예측 가능성         | 전 영역                           | FF 예측 가능성                  |
-| EH  | 에러/예외 처리      | `lib/api/**`, 시스템 경계          | 자체 + FF 디버깅                |
-| RX  | React/페이지        | `app/**/*.tsx`, page hooks        | 자체 + FF 가독성/결합도/디버깅  |
+| EH  | 에러/예외 처리      | `src/lib/api/**`, 시스템 경계      | 자체 + FF 디버깅                |
+| RX  | React/페이지        | `src/**/*.tsx`, page hooks        | 자체 + FF 가독성/결합도/디버깅  |
 | CH  | 응집도              | 전 영역                           | FF 응집도                       |
 | CP  | 결합도              | 전 영역                           | FF 결합도                       |
 
@@ -156,10 +154,10 @@ export const http = {
 
 ```ts
 // ✅ After — axios 인스턴스는 베이스 그대로 export, 헤더 주입은 인스턴스 설정으로
-// lib/api/client/http.ts
+// src/lib/api/client/http.ts
 export const http = axios.create({
   baseURL: "https://dapi.kakao.com",
-  headers: { Authorization: `KakaoAK ${process.env.NEXT_PUBLIC_KAKAO_KEY}` },
+  headers: { Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}` },
 });
 ```
 
@@ -208,7 +206,7 @@ async function searchBooks(params): Promise<BookSearchResponse> {
 
 ```ts
 // ✅ After — api 함수는 순수, 부수효과는 호출부/React Query 콜백에서 명시
-// lib/api/books/api.ts
+// src/lib/api/books/api.ts
 async function searchBooks(params): Promise<BookSearchResponse> {
   const res = await http.get("/v3/search/book", { params });
   return res.data;
@@ -216,7 +214,7 @@ async function searchBooks(params): Promise<BookSearchResponse> {
 // 로깅이 필요하면 useBookSearchQuery 콜백 또는 이벤트 핸들러에서
 ```
 
-**WHY**: 함수 이름과 반환 타입으로 예측되지 않는 동작(로깅/스토리지 쓰기 등)이 안에 숨어 있으면 호출자가 디버깅 시 추적 어려움. 부수효과는 호출부에서 명시적으로. `lib/api/{domain}/api.ts`는 axios 호출만 — Toast 등은 React Query `onSuccess`/이벤트 핸들러에서.
+**WHY**: 함수 이름과 반환 타입으로 예측되지 않는 동작(로깅/스토리지 쓰기 등)이 안에 숨어 있으면 호출자가 디버깅 시 추적 어려움. 부수효과는 호출부에서 명시적으로. `src/lib/api/{domain}/api.ts`는 axios 호출만 — Toast 등은 React Query `onSuccess`/이벤트 핸들러에서.
 
 **관련**: FF 예측 가능성/`hidden-logic`
 
@@ -318,10 +316,10 @@ try {
 
 ## RX — React/페이지
 
-### RX-1 page.tsx에 useState/useMutation 직접 — Major
+### RX-1 `{Name}Page.tsx`에 useState/useMutation 직접 — Major
 
 ```tsx
-// ❌ page.tsx 안에서 필터/상태 보유
+// ❌ SearchPage.tsx 안에서 필터/상태 보유
 const SearchPage = () => {
   const [query, setQuery] = useState("");
   const booksQuery = useBookSearchQuery({ query });
@@ -341,7 +339,7 @@ const SearchPage = () => {
 };
 ```
 
-**WHY**: page.tsx는 **얇은 조립**만, 비즈니스 로직은 hook. 수직 슬라이스(page/hooks/components/styles) SOT는 `page.md`.
+**WHY**: `{Name}Page.tsx`는 **얇은 조립**만, 비즈니스 로직은 hook. 수직 슬라이스(page/hooks/components/styles) SOT는 `page.md`.
 
 **관련**: `react.md` "Page-level Context Provider 패턴", `page.md`
 
@@ -460,16 +458,16 @@ function SearchPage() {
 
 ```tsx
 // ✅ After — 횡단 관심사를 wrapper/경계로 추출
-// 시스템 에러 → error.tsx route boundary, 빈 결과 → 리스트 empty prop
+// 시스템 에러 → react-router errorElement / ErrorBoundary, 빈 결과 → 리스트 empty prop
 function SearchPage() {
   const value = useSearch();
   return <SearchContext.Provider value={value}><SearchScreen /></SearchContext.Provider>;
 }
 ```
 
-**WHY**: 페이지는 화면 구성만, 에러바운더리·로깅 같은 횡단 관심사는 wrapper/특수 파일로. 페이지를 읽을 때 한 번에 들어오는 맥락 수 감소.
+**WHY**: 페이지는 화면 구성만, 에러바운더리·로깅 같은 횡단 관심사는 wrapper/라우트 경계로. 페이지를 읽을 때 한 번에 들어오는 맥락 수 감소.
 
-**적용**: 시스템 에러는 Next.js `error.tsx`, 없음 상태는 리스트/컴포넌트 `empty` prop으로 위임(`RX-13`).
+**적용**: 시스템 에러는 react-router 라우트의 `errorElement`(또는 상위 `ErrorBoundary`), 없음 상태는 리스트/컴포넌트 `empty` prop으로 위임(`RX-13`).
 
 **관련**: `conventions.md` "구현 상세 숨기기", FF 가독성/`login-start-page`
 
@@ -639,7 +637,7 @@ const useSearch = () => {
 
 **WHY**: React Query는 같은 응답에 대해 동일 reference를 유지(structural sharing). data 자체가 stable이라 다시 `useMemo`로 감싸면 (1) 무의미한 의존성 추적 비용, (2) hook 반환이 query + memo로 혼재되어 `PR-2` 위반, (3) `total_count` 같은 1차 derived는 인라인이 자연스러움. **TS narrowing(`?? EMPTY`) + `placeholderData`** 조합으로 page에서 `?? []` 없이 직접 접근 가능.
 
-**보조 처방**: `lib/api/books/api.queries.ts`에 `EMPTY_BOOK_SEARCH` 상수 + `placeholderData` 명시 → hook은 `?? EMPTY`로 narrowing.
+**보조 처방**: `src/lib/api/books/api.queries.ts`에 `EMPTY_BOOK_SEARCH` 상수 + `placeholderData` 명시 → hook은 `?? EMPTY`로 narrowing.
 
 **관련**: `RX-2`, `react.md` Handler/Memo 객체
 
@@ -663,20 +661,20 @@ const SearchPage = () => {
 ```
 
 ```tsx
-// ✅ After — empty는 리스트 컴포넌트 prop, 시스템 에러는 error.tsx로 위임
+// ✅ After — empty는 리스트 컴포넌트 prop, 시스템 에러는 react-router errorElement로 위임
 const SearchScreen = () => {
   const { data } = useSearchContext();
   return <BookList books={data.documents} empty="검색 결과가 없습니다" />;
 };
 ```
 
-**WHY**: (a) 비즈니스 에러는 React Query `onError` → Toast, (b) 빈 상태는 리스트 컴포넌트 `empty` prop, (c) 시스템 에러(5xx, 네트워크 단절)는 Next.js `error.tsx` special file — **page가 분기를 박으면 같은 책임이 여러 곳에 흩어진다**.
+**WHY**: (a) 비즈니스 에러는 React Query `onError` → Toast, (b) 빈 상태는 리스트 컴포넌트 `empty` prop, (c) 시스템 에러(5xx, 네트워크 단절)는 react-router 라우트의 `errorElement`(또는 상위 `ErrorBoundary`) — **page가 분기를 박으면 같은 책임이 여러 곳에 흩어진다**.
 
 **판단 기준**:
 - 빈 상태 표시 = 리스트/`EmptyState` 컴포넌트 prop
 - 요청 에러 = wrapper hook onError → Toast
-- 시스템 에러 = `error.tsx` route boundary
-- page.tsx는 `data` 렌더 조합만
+- 시스템 에러 = react-router `errorElement` / `ErrorBoundary`
+- `{Name}Page.tsx`는 `data` 렌더 조합만
 
 **예외**: 첫 진입 cold start가 길고 placeholder 깜빡임 우려 시 `placeholderData` 또는 Suspense + Skeleton 도입.
 

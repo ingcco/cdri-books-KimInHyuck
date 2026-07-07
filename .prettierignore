@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+playwright-report
+test-results
+*.log
+.DS_Store
+pnpm-lock.yaml
+
+# 하네스/기획 문서 — 앱 코드 포맷 대상 아님
+.claude
+.docs
+CLAUDE.md

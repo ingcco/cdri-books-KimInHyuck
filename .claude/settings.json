@@ -65,6 +65,17 @@
             "statusMessage": "민감 파일 검사 중..."
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-source-hygiene.sh",
+            "timeout": 5,
+            "statusMessage": "소스 청결도 검사 중..."
+          }
+        ]
       }
     ],
     "PostToolUse": [

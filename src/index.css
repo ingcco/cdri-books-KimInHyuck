@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@source not "../.claude";
+@source not "../.docs";
+
+@import "@fontsource/noto-sans-kr/korean-300.css";
+@import "@fontsource/noto-sans-kr/korean-500.css";
+@import "@fontsource/noto-sans-kr/korean-700.css";
+
+@theme {
+  --color-primary: #4880ee;
+  --color-red: #e84118;
+  --color-gray: #dadada;
+  --color-light-gray: #f2f4f6;
+  --color-white: #ffffff;
+  --color-black: #222222;
+  --color-text-primary: #353c49;
+  --color-text-secondary: #6d7582;
+  --color-text-subtitle: #8d94a0;
+
+  --font-sans: "Noto Sans KR", sans-serif;
+}
+
+@utility title1 {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 24px;
+}
+@utility title2 {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 24px;
+}
+@utility title3 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 18px;
+}
+@utility body1 {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 20px;
+}
+@utility body2 {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+}
+@utility body2-bold {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 14px;
+}
+@utility caption {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 16px;
+}
+@utility small {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 10px;
+}

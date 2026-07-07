@@ -1,6 +1,6 @@
 ---
 name: security
-description: OWASP Top 10 기반 보안 리뷰. API Route(카카오 프록시), 입력 검증, 시크릿(카카오 REST 키) 은닉, 민감 데이터 처리를 체크합니다. 트리거 - "/security", "보안 리뷰", "보안 체크"
+description: OWASP Top 10 기반 보안 리뷰. 카카오 API 클라이언트 직접 호출, 입력 검증, 시크릿(카카오 REST 키) 하드코딩/.env 커밋 방지, 민감 데이터 처리를 체크합니다. 트리거 - "/security", "보안 리뷰", "보안 체크"
 effort: xhigh
 ---
 
@@ -8,9 +8,9 @@ effort: xhigh
 
 변경된 코드 또는 지정된 범위를 OWASP Top 10 + 프로젝트 특화 기준으로 리뷰하는 스킬.
 
-> **보안 체크 기준 SOT**: 본 체크리스트(OWASP A01~A10 + 카카오 API 키 은닉)가 보안 검사 기준의 단일 출처다. `/review`의 Security 차원이 이 체크리스트를 참조 로드한다(severity 매핑: Critical→`Blocker`, Warning→`Major`). 본 스킬 단독 호출은 심층·범위 지정 보안 리뷰 용도.
+> **보안 체크 기준 SOT**: 본 체크리스트(OWASP A01~A10 + 카카오 API 키 취급)가 보안 검사 기준의 단일 출처다. `/review`의 Security 차원이 이 체크리스트를 참조 로드한다(severity 매핑: Critical→`Blocker`, Warning→`Major`). 본 스킬 단독 호출은 심층·범위 지정 보안 리뷰 용도.
 
-> **과제 특성**: 인증/인가·DB가 없는 공개 도서 검색 앱이다. 서버가 보호할 대상은 **카카오 REST 키 하나**뿐이며, 나머지 위협면은 입력 검증·XSS·시크릿 노출·의존성으로 좁혀진다. 인증/세션 관련 항목은 "해당 없음"으로 표기한다.
+> **과제 특성**: 인증/인가·DB·서버(BFF)가 없는 순수 CSR 도서 검색 앱이다. 카카오 API를 **클라이언트에서 직접 호출**하므로 REST 키의 **번들 노출은 과제 전제**(과제가 `.env`를 이메일로 제출받는 방식)다. 따라서 "키를 서버에 은닉했는가"가 아니라 ① `.env*` 커밋 방지 ② 키 하드코딩 방지(`import.meta.env` 접근만) ③ README 트레이드오프 명시 ④ 에러 UI에 카카오 원문/키 미노출 — 이 4가지가 보안 초점이다. 인증/세션 관련 항목은 "해당 없음"으로 표기한다.
 
 ## 트리거
 
@@ -30,16 +30,15 @@ git diff --cached --name-only
 
 파일을 보안 관심 영역으로 분류:
 
-| 영역           | 매칭 패턴                             | 체크리스트                        |
-| -------------- | ------------------------------------- | --------------------------------- |
-| **API Route**  | `app/api/**/route.ts`                 | 입력검증 + 응답 봉투 + 에러 은닉  |
-| **Service**    | `app/api/**/service.ts`, `lib/http/**`| 카카오 키 은닉 + upstream 호출    |
-| **클라이언트** | `app/**/*.tsx`, `components/**`       | XSS + 키 노출                     |
-| **설정 파일**  | `.env*`, `next.config.*`, `*.json`    | 시크릿 노출                       |
+| 영역           | 매칭 패턴                                 | 체크리스트                          |
+| -------------- | ----------------------------------------- | ----------------------------------- |
+| **API 계층**   | `src/lib/api/**`                          | 키 하드코딩 방지 + 입력검증 + 에러 정규화 |
+| **클라이언트** | `src/pages/**/*.tsx`, `src/components/**` | XSS + 에러 UI에 키/원문 미노출      |
+| **설정 파일**  | `.env*`, `vite.config.*`, `*.json`        | 시크릿 하드코딩·`.env` 커밋 여부    |
 
 ### 2. 체크리스트 순회
 
-해당 영역의 체크리스트만 적용. **카카오 API 키 은닉** 절은 API Route/Service/설정 변경 시 항상 적용.
+해당 영역의 체크리스트만 적용. **카카오 API 키 취급** 절은 API 계층/설정/`.env` 변경 시 항상 적용.
 
 ### 3. 결과 보고
 
@@ -48,7 +47,7 @@ git diff --cached --name-only
 
 ### 🔴 Critical (즉시 수정)
 **`파일경로`**
-1. [키 은닉] KAKAO_REST_API_KEY가 NEXT_PUBLIC_ 접두사로 노출됨 (line 3)
+1. [키 하드코딩] 소스에 `KakaoAK <실키>` 문자열 하드코딩 — `import.meta.env.VITE_KAKAO_REST_API_KEY`로 이동 (line 3)
 
 ### 🟡 Warning (권장 수정)
 **`파일경로`**
@@ -64,61 +63,70 @@ git diff --cached --name-only
 
 ---
 
-## 🔑 카카오 API 키 은닉 체크리스트 (최우선)
+## 🔑 카카오 API 키 취급 체크리스트 (최우선)
 
-서버가 보호할 유일한 시크릿이 카카오 REST 키다. 아래 6항목은 API Route/Service/설정 변경 시 반드시 검사한다.
+키의 **번들 노출은 과제 전제**다(BFF 없음). 따라서 "서버 은닉"이 아니라 아래 4항목을 검사한다. `.env`/API 계층/설정 변경 시 항상 적용.
 
-### (a) `NEXT_PUBLIC_` 접두사 키 금지
-
-```bash
-# NEXT_PUBLIC_ 로 카카오 키를 노출하면 클라이언트 번들에 인라인됨 → 즉시 Critical
-grep -rniE "NEXT_PUBLIC_[A-Z_]*KAKAO" . --include="*.ts" --include="*.tsx" --include=".env*" 2>/dev/null
-```
-
-- 카카오 키 env 이름은 `KAKAO_REST_API_KEY` (접두사 없음, 서버 전용). `NEXT_PUBLIC_` 로 시작하는 순간 브라우저 번들에 박히므로 금지.
-
-### (b) 빌드 산출물(`.next`)에서 키 문자열 grep 검사
+### (a) `.env*`가 `.gitignore`에 있고 커밋 이력에 없음
 
 ```bash
-pnpm build
-# .env.local의 실제 키 값이 산출물에 새어나갔는지 검사
-KEY=$(grep -oE 'KAKAO_REST_API_KEY=.*' .env.local 2>/dev/null | cut -d= -f2-)
-if [ -n "$KEY" ]; then
-  grep -rn "$KEY" .next/ 2>/dev/null && echo "!! 산출물에 키 노출 — Critical" || echo "OK: 산출물에 키 없음"
-fi
-# 카카오 인증 헤더 접두사가 클라이언트 청크에 있으면 안 됨 (KakaoAK {키})
-grep -rn "KakaoAK" .next/static 2>/dev/null && echo "!! 클라이언트 청크에 인증 헤더 — Critical" || echo "OK: 클라이언트 청크 clean"
+# .env* 가 gitignore 되는지
+grep -qE '(^|/)\.env' .gitignore && echo "OK: .env* gitignore" || echo "!! .env 미포함 — 추가 필요 (Critical)"
+
+# 실제 키 파일이 이미 트래킹되고 있지 않은지 (커밋 이력 노출 = Critical)
+git ls-files --error-unmatch .env .env.local 2>/dev/null && echo "!! .env 커밋됨 — Critical (키 재발급 필요)" || echo "OK: .env 미커밋"
+
+# 과거 커밋 이력에 키 파일이 들어간 적 있는지
+git log --all --oneline --name-only 2>/dev/null | grep -E '(^|/)\.env(\.local)?$' && echo "!! 이력에 .env 존재 — history 정리 + 키 rotate" || echo "OK: 이력 clean"
 ```
 
-### (c) `.env*`가 `.gitignore`에 포함
+- `.env`, `.env.local` 등 실제 키 파일은 커밋 금지. `.env.example`(placeholder만)은 커밋 가능.
+
+### (b) 키 하드코딩 금지 — `import.meta.env` 접근만
 
 ```bash
-grep -qE '(^|/)\.env' .gitignore && echo "OK: .env* gitignore" || echo "!! .env 미포함 — 추가 필요"
+# 소스에 KakaoAK <실키> 리터럴 / 32자리 hex 하드코딩 (Critical)
+grep -rEn "KakaoAK\s+[0-9a-fA-F]{20,}" src 2>/dev/null
+
+# Authorization 헤더에 키 문자열 직접 할당
+grep -rEn "Authorization['\"]?\s*:\s*['\"]KakaoAK\s+[A-Za-z0-9]+['\"]" src 2>/dev/null
+
+# apiKey/token 변수에 문자열 리터럴 직접 할당
+grep -rEn "(apiKey|API_KEY|token|KAKAO_KEY)\s*[:=]\s*['\"][A-Za-z0-9]{20,}['\"]" src 2>/dev/null
 ```
 
-- `.env`, `.env.local` 등 실제 키가 담긴 파일이 커밋되지 않는지 확인. `.env.example`(placeholder만)은 커밋 가능.
+- 키는 오직 `import.meta.env.VITE_KAKAO_REST_API_KEY`로만 접근한다. 소스 어디에도 실제 키 문자열이 없어야 한다.
+- 검출되면 `.env.local`로 옮기고 `.env.example`에 placeholder(`VITE_KAKAO_REST_API_KEY=`) 추가.
 
-### (d) 키 사용은 Route Handler(server)에서만
+### (c) README에 트레이드오프 명시
 
-- `KAKAO_REST_API_KEY` / `KakaoAK` 헤더 주입은 `app/api/**` 또는 `lib/http/kakao.ts`(서버 전용 모듈)에서만 일어난다.
-- `"use client"` 컴포넌트, `components/**`, 클라이언트 훅에서 `process.env.KAKAO_*` 참조 금지.
+- 키 번들 노출이 **의도된 과제 전제**임과, **실서비스라면 BFF 프록시로 은닉**해야 한다는 트레이드오프가 README에 기술되어 있는지 확인.
 
 ```bash
-# 클라이언트 코드에서 키 참조 여부
-grep -rn "process.env.KAKAO" app --include="*.tsx" 2>/dev/null
-grep -rln "\"use client\"" app components | xargs grep -l "KAKAO" 2>/dev/null
+grep -qiE 'BFF|프록시|proxy|은닉|트레이드오프|trade' README.md && echo "OK: 트레이드오프 문구 존재" || echo "!! README 트레이드오프 미기술 — 추가 필요 (Warning)"
 ```
 
-### (e) 에러 응답에 upstream(카카오) 원문/키 미노출
+### (d) 에러 UI에 카카오 원문 에러/키 미노출
 
-- 카카오 호출 실패 시 upstream 응답 본문·상태 원문·요청 헤더(키 포함)를 그대로 클라이언트로 흘리지 않는다.
-- 자체 코드/메시지로 치환 (예: `fail("UPSTREAM_ERROR", "도서 검색에 실패했습니다.", 502)`).
-- catch 블록에서 `error.config`, `error.request.headers`(Authorization=KakaoAK 키 포함)를 응답에 담지 않는지 확인.
+- 카카오 호출 실패 시 upstream 응답 본문·상태 원문·요청 헤더(Authorization=`KakaoAK` 키 포함)를 **그대로 화면/콘솔에 노출하지 않는다**.
+- axios 인터셉터에서 자체 코드·메시지로 정규화(예: `throw new AppError("UPSTREAM_ERROR", "도서 검색에 실패했습니다.")`).
+- catch/토스트/에러 UI에서 `error.config`, `error.request.headers`(키 포함)를 렌더/로깅하지 않는지 확인.
 
-### (f) 클라이언트로 전달되는 응답 봉투에 불필요 헤더 미포함
+```bash
+# 에러 객체를 통째로 노출하는 패턴 (config/headers에 키가 실려 있음)
+grep -rEn "error\.(config|request)|JSON\.stringify\(error\b" src 2>/dev/null
+```
 
-- 카카오 axios 응답 객체(`res.headers`, `res.config`)를 그대로 반환하지 말고 **필요한 데이터 필드만 DTO로 매핑**해 봉투에 담는다.
-- Route Handler 응답에 카카오 rate-limit·인증 관련 헤더를 전파하지 않는다.
+### (e) 제출용 소스 청결도 — 타 프로젝트명·작업 과정 주석 미노출
+
+면접관이 직접 읽는 코드다. `src/**`·설정 파일에 다른 프로젝트/조직명, Figma 노드 ID·PAT, "재검증"/"발견" 같은 작업 로그성 주석이 남아있지 않은지 확인(`.claude/hooks/guard-source-hygiene.sh`가 Write/Edit 시점에 이미 차단하지만, 그 이전에 작성된 내용은 별도 확인 필요).
+
+```bash
+grep -rniE "web-andrsen|vxt-fashion-admin|klleon|hururup" src eslint.config.js vite.config.ts package.json .env.example index.html 2>/dev/null
+grep -rEn "figd_[A-Za-z0-9_-]+" . --include="*.ts" --include="*.tsx" --include="*.js" --include="*.json" --include="*.md" 2>/dev/null | grep -v node_modules
+```
+
+검출되면 즉시 제거. 최종 제출 직전에는 `.docs`/`.claude`도 포함해 전수조사(범위 확대는 `/ship` 최종 단계에서).
 
 ---
 
@@ -130,10 +138,11 @@ grep -rln "\"use client\"" app components | xargs grep -l "KAKAO" 2>/dev/null
 
 ### [A02] Cryptographic Failures — 암호화 / 민감 데이터
 
-**민감 데이터** (암호화할 자격증명은 카카오 키뿐)
+**민감 데이터** (취급 대상은 카카오 키뿐, 번들 노출은 과제 전제)
 
 - [ ] 로그(`console.log`/에러 로거)에 카카오 REST 키·`KakaoAK` 헤더 미출력
-- [ ] 클라이언트로 나가는 응답에 키/원문 헤더 미포함 (→ 카카오 키 은닉 (e)(f))
+- [ ] 에러 UI/토스트/콘솔에 카카오 원문 에러·요청 헤더(키 포함) 미노출 (→ 카카오 키 취급 (d))
+- [ ] 소스에 키 문자열 하드코딩 없음 — `import.meta.env` 접근만 (→ (b))
 - [ ] 비밀번호 해싱 등: **해당 없음** — 저장하는 자격증명 없음
 
 ### [A03] Injection — 인젝션
@@ -163,31 +172,31 @@ grep -rln "\"use client\"" app components | xargs grep -l "KAKAO" 2>/dev/null
 
 **환경 설정**
 
-- [ ] `.env*` 파일이 `.gitignore`에 포함 (→ 카카오 키 은닉 (c))
-- [ ] 에러 응답에 stack trace/내부 경로 미포함 (prod)
-- [ ] 응답 봉투가 자체 스키마(`ok`/`error.code`)로 일관되며 내부 구현 노출 없음
+- [ ] `.env*` 파일이 `.gitignore`에 포함 + 커밋 이력에 없음 (→ 카카오 키 취급 (a))
+- [ ] 에러 UI/콘솔에 stack trace·카카오 원문 응답 미노출
+- [ ] axios 인터셉터가 에러를 자체 코드/메시지(`AppError` 등)로 정규화 — 카카오 raw 에러 그대로 전파 금지
 
 **시크릿 하드코딩 (자동 grep 검증)**
 
-다음 패턴이 소스에서 검출되면 즉시 환경변수로 분리:
+다음 패턴이 소스에서 검출되면 즉시 `.env.local`로 분리:
 
 ```bash
 # 카카오 인증 헤더에 키 하드코딩 (KakaoAK {32자리 hex})
-grep -rEn "KakaoAK\s+[0-9a-f]{20,}" app lib 2>/dev/null
+grep -rEn "KakaoAK\s+[0-9a-fA-F]{20,}" src 2>/dev/null
 
 # Authorization 헤더 하드코딩
-grep -rEn "Authorization['\"]?\s*:\s*['\"]KakaoAK\s+[A-Za-z0-9]+['\"]" app lib 2>/dev/null
+grep -rEn "Authorization['\"]?\s*:\s*['\"]KakaoAK\s+[A-Za-z0-9]+['\"]" src 2>/dev/null
 
 # apiKey/token 변수에 문자열 리터럴 직접 할당
-grep -rEn "(apiKey|API_KEY|token)\s*[:=]\s*['\"][A-Za-z0-9]{20,}['\"]" app lib 2>/dev/null
+grep -rEn "(apiKey|API_KEY|token)\s*[:=]\s*['\"][A-Za-z0-9]{20,}['\"]" src 2>/dev/null
 ```
 
-검출되면 `process.env.KAKAO_REST_API_KEY`(서버 전용 Route Handler)로 이동하고, `.env.example`에 placeholder 추가.
+검출되면 `import.meta.env.VITE_KAKAO_REST_API_KEY`로 이동하고, `.env.example`에 placeholder 추가.
 
 **환경변수 분리 후 점검:**
 
-- [ ] `.env*`이 `.gitignore`에 포함되어 있는지 재확인
-- [ ] Vercel 프로젝트 환경변수에 `KAKAO_REST_API_KEY` 등록 (빌드/런타임)
+- [ ] `.env*`이 `.gitignore`에 포함 + 미커밋 재확인
+- [ ] Vercel 프로젝트 환경변수에 `VITE_KAKAO_REST_API_KEY` 등록 (빌드 시 번들에 주입됨을 인지)
 - [ ] 기존 커밋 이력에 키 노출 시 카카오 콘솔에서 키 재발급 (rotate)
 
 ### [A06] Vulnerable Components — 취약한 컴포넌트
@@ -209,21 +218,26 @@ grep -rEn "(apiKey|API_KEY|token)\s*[:=]\s*['\"][A-Za-z0-9]{20,}['\"]" app lib 2
 - [ ] `console.log`로 카카오 키·인증 헤더·요청 URL(키 쿼리) 미출력
 - [ ] upstream 에러 로깅 시 요청 헤더(Authorization) 마스킹
 
-### [A10] SSRF — 서버 사이드 요청 위조
+### [A10] SSRF — 요청 위조
 
-- [ ] 카카오 upstream **URL(host)은 서버에서 하드코딩** — 사용자 입력은 검색어/페이지 파라미터로만 전달되고 요청 대상 도메인을 제어할 수 없음
-- [ ] 사용자 입력을 그대로 `fetch(userInput)` 대상 URL로 사용하지 않음
+**서버가 없어 전통적 SSRF는 해당 없음**. 클라이언트 요청 대상 고정만 확인:
+
+- [ ] axios **baseURL(`https://dapi.kakao.com`)은 코드에 상수로 고정** — 사용자 입력은 검색어/페이지 파라미터로만 전달되고 요청 대상 도메인을 제어할 수 없음
+- [ ] 사용자 입력을 그대로 `axios.get(userInput)` 대상 URL로 사용하지 않음
 
 ---
 
 ## 프로젝트 특화 체크
 
-### 카카오 프록시 Route (`app/api/books/route.ts`, `service.ts`, `lib/http/kakao.ts`)
+### 카카오 API 클라이언트 (`src/lib/api/client/http.ts`, BFF/프록시 없음)
 
-- [ ] 키 주입은 서버 전용 모듈 한 곳(`lib/http/kakao.ts`)에 집중 (→ 카카오 키 은닉 (d))
+> 이 앱은 카카오 API를 클라이언트에서 직접 호출한다. 키의 **번들 노출은 과제 전제**(`.env` 이메일 제출 방식)이므로 "서버 은닉"이 아니라 아래 3가지를 불변식으로 확인한다(CLAUDE.md "보안 불변식" SOT).
+
+- [ ] 키 주입은 axios 인스턴스 한 곳(`src/lib/api/client/http.ts`)에 집중, `import.meta.env.VITE_KAKAO_REST_API_KEY`로만 참조 (소스에 `KakaoAK <실키>` 하드코딩 없음)
+- [ ] `.env`·`.env.local`이 `.gitignore`에 있고 커밋 이력에 없음. `.env.example`은 placeholder만
 - [ ] 페이지네이션 상한·검색어 검증으로 upstream 남용/rate-limit 소진 방지
-- [ ] 응답은 필요한 필드만 DTO로 매핑 (→ (f)), 에러는 자체 코드로 치환 (→ (e))
-- [ ] 클라이언트는 자체 `/api/books`만 호출, 카카오 도메인 직접 호출 없음
+- [ ] 카카오 에러 응답은 인터셉터에서 안전한 메시지로 치환 (→ (e), 원문 그대로 노출 금지)
+- [ ] README에 BFF 미도입 트레이드오프가 명시돼 있음
 
 ---
 

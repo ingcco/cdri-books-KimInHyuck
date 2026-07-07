@@ -32,9 +32,8 @@ PRICING = {
 # 스킬이 추가되면 여기에 매핑 추가
 SKILL_FILE_PATTERNS = {
     "review": [r"\.tsx?$", r"\.css$", r"\.ts$"],  # 모든 코드 변경
-    "review-ui": [r"app/.*/(page|page\.style)\.tsx?$", r"components/"],
-    "security": [r"app/api/", r"lib/"],
-    "nextjs": [r"app/.*/(page|layout)\.tsx?$", r"app/api/.*/route\.ts", r"middleware\.ts"],
+    "review-ui": [r"src/pages/.*\.tsx?$", r"src/components/"],
+    "security": [r"src/lib/api/", r"src/lib/storage/"],
     "planning": [],  # 계획 수립 시 명시적 호출
     "ship": [],  # 마무리 시 명시적 호출
     "zoom-out": [],  # 구조 파악 시 명시적 호출
@@ -45,7 +44,6 @@ SKILL_PURPOSE = {
     "review": "변경 코드 컨벤션 리뷰",
     "review-ui": "브라우저 시각 검증",
     "security": "OWASP 보안 리뷰",
-    "nextjs": "Next.js 페이지/라우트",
     "planning": "계획 수립 + 구현",
     "ship": "커밋 + 세션 리포트",
     "zoom-out": "코드 구조 파악",

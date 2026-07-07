@@ -1,10 +1,9 @@
 ---
-description: "React 규칙 — deps 최대 2개, useEffect 최소화, Handler/Memo 패턴, SSR 가드, Form Controller 통일"
+description: "React 규칙 — deps 최대 2개, useEffect 최소화, Handler/Memo 패턴, 브라우저 API 환경 가드, Form Controller 통일"
 paths:
-  - "app/**/*.tsx"
-  - "app/**/hooks/**/*.ts"
-  - "components/**/*.tsx"
-  - "hooks/**/*.ts"
+  - "src/**/*.tsx"
+  - "src/**/hooks/**/*.ts"
+  - "src/**/*.ts"
 ---
 
 # React 규칙
@@ -65,14 +64,14 @@ const booksQuery = useBookSearchQuery({ query, sort, page });
 
 `useBookSearch`가 검색 결과 fetch를 `useEffect + setState`로 하고 있으면 `useBookSearchQuery`(React Query)로 이전한다. URL 필터(nuqs)가 바뀌면 queryKey가 바뀌며 자동 refetch되므로 검색용 useEffect는 0개가 이상적이다.
 
-## SSR 안전성
+## 브라우저 API 환경 가드
 
-Next.js 환경에서 브라우저 API(localStorage 등) 접근 시 가드 필수. 찜 목록을 `localStorage`로 유지하면 초기 읽기에서 특히 주의:
+이 앱은 CSR이지만 브라우저 API(localStorage 등) 접근 시 **환경 가드는 유지**한다 — 테스트가 node 환경(Vitest)에서 훅을 실행하고, 향후 SSR/프리렌더 도입 여지도 있기 때문. 찜 목록을 `localStorage`로 유지하면 초기 읽기에서 특히 주의:
 
 ```typescript
 if (typeof window === "undefined") return defaultValue;
 
-// 찜 목록 초기값 — SSR/CSR hydration 불일치 방지
+// 찜 목록 초기값 — window 부재(node 테스트 등) 방어
 const readFavorites = (): string[] => {
   if (typeof window === "undefined") return [];
   try {
@@ -299,9 +298,7 @@ Hook 분리 원칙:
 **구조 — hook 파일에 hook + Context + useContext 통합 export**:
 
 ```ts
-// app/search/hooks/useSearch.ts  ← JSX 없음(createContext는 함수 호출). Provider JSX는 page.tsx에
-"use client";
-
+// src/pages/SearchPage/hooks/useSearch.ts  ← JSX 없음(createContext는 함수 호출). Provider JSX는 SearchPage.tsx에
 import { createContext, useContext } from "react";
 import { EMPTY_BOOK_SEARCH, useBookSearchQuery } from "@/lib/api/books/api.queries";
 
@@ -327,7 +324,7 @@ export { useSearch, SearchContext, useSearchContext };
 
 **선언 순서 — 고정**:
 
-1. `"use client"` + imports
+1. imports
 2. `type {Domain}ContextValue = ReturnType<typeof use{Domain}>`
 3. `const {Domain}Context = createContext<... | null>(null)`
 4. `use{Domain}Context` (Context consumer)
@@ -335,7 +332,7 @@ export { useSearch, SearchContext, useSearchContext };
 6. `export { ... }`
 
 ```tsx
-// app/search/page.tsx — page가 useSearch() 호출 + SearchContext.Provider 명시
+// src/pages/SearchPage/SearchPage.tsx — page가 useSearch() 호출 + SearchContext.Provider 명시
 const SearchPage = () => {
   const value = useSearch();
 
@@ -350,7 +347,7 @@ const SearchPage = () => {
 **규칙**:
 
 - **별도 `SearchContext.tsx` 파일 분리 금지** — `useSearch.ts`에 통합(응집도). hook과 Context는 한 생명 주기 + 통합 export
-- **파일 확장자 `.ts` 유지** — Provider 래퍼를 만들지 않으므로 hook 파일에 JSX 없음. Provider JSX 사용은 호출처(page.tsx)에서
+- **파일 확장자 `.ts` 유지** — Provider 래퍼를 만들지 않으므로 hook 파일에 JSX 없음. Provider JSX 사용은 호출처(`{Name}Page.tsx`)에서
 - **Provider 래퍼 컴포넌트(`SearchProvider`) 만들지 않음** — page에서 `<SearchContext.Provider value={value}>` 명시. 이유: (1) 래퍼는 의미 없는 한 줄 wrap, (2) page에서 hook 호출 위치가 명시적이라 value 출처 즉시 식별, (3) hook 파일을 `.ts`로 유지 가능
 - **value 타입 = `ReturnType<typeof useSearch>`** — handler 추가 시 자동 확장, 명시 interface 중복 정의 불필요
 - **컴포넌트 export는 OK** — 단 hook 반환값에는 React 컴포넌트 포함 금지 (value는 데이터/함수만)
@@ -363,7 +360,7 @@ const SearchPage = () => {
 
 **분리 원칙**:
 
-- **State/Form 관리 위치** — 모달의 form/handler는 라우트의 `app/{route}/hooks/` 아래 hook 또는 페이지 Context에 둔다. `components/` 하위에는 hook 파일을 만들지 않는다. 모달 컴포넌트는 Context/props를 **소비만** 한다.
+- **State/Form 관리 위치** — 모달의 form/handler는 페이지 슬라이스의 `src/pages/{Name}Page/hooks/` 아래 hook 또는 페이지 Context에 둔다. `components/` 하위에는 hook 파일을 만들지 않는다. 모달 컴포넌트는 Context/props를 **소비만** 한다.
 - 필드 ≤ 2개의 단순 모달은 컴포넌트 내부 `useForm` 직접 사용 허용.
 
 **Lifecycle**:

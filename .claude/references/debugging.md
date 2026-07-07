@@ -4,7 +4,7 @@ description: "디버깅 4 단계 방법론 SOT. 진단 → 재현 → 수정 →
 
 # 디버깅 방법론 (4 단계)
 
-> 출처: 토스 frontend-fundamentals `https://frontend-fundamentals.com/debug/`. 본 문서는 그 절차론을 이 프로젝트 컨텍스트(Next.js App Router, React Query, 카카오 도서 검색 API)에 맞게 재정리한 SOT.
+> 출처: 토스 frontend-fundamentals `https://frontend-fundamentals.com/debug/`. 본 문서는 그 절차론을 이 프로젝트 컨텍스트(Vite + React CSR, React Query, 카카오 도서 검색 API 직접 호출)에 맞게 재정리한 SOT.
 
 ## 핵심 원칙
 
@@ -111,7 +111,7 @@ TypeError: Cannot read properties of undefined (reading 'name')
 
 비즈니스 로직을 UI/IO에서 떼어내 입출력만 있는 함수로. 테스트 가능 + 재사용 + 변경 영향 국소화.
 
-예: `app/api/books/route.ts`의 쿼리 파라미터 검증·응답 변환을 순수 함수로 분리. React 컴포넌트에선 계산 로직을 util로 분리.
+예: `src/lib/api/books/api.ts`의 검색 파라미터 조립·응답 매핑을 순수 함수로 분리. React 컴포넌트에선 계산 로직을 util로 분리.
 
 ### 3.3 Dead Code 제거
 
@@ -156,7 +156,7 @@ TypeError: Cannot read properties of undefined (reading 'name')
 
 ## 프로젝트 적용 가이드
 
-### Next.js + React Query 컨텍스트
+### React + React Query 컨텍스트
 
 - **타입 오류 위장 금지** (RX-7): `useQuery<T, E, FinalShape>` 3번째 generic 자의 변경 ❌ → `select: ({ data }) => ...`
 - **Form silent fail** (RX-8): `handleSubmit(onSubmit, onError)` 양쪽 핸들러 — zod transform 실패도 onError로 잡힘
@@ -164,12 +164,12 @@ TypeError: Cannot read properties of undefined (reading 'name')
 - **고빈도 이벤트 성능** (RX-10): 드래그/스크롤 60Hz는 setState 금지 → useRef + DOM 직접 조작
 - **cleanup** (RX-11): useEffect의 setInterval/setTimeout/EventListener → return cleanup 의무. fetch는 `AbortController`로 취소
 
-### 카카오 프록시 Route Handler 컨텍스트
+### 카카오 API 클라이언트 컨텍스트 (BFF/프록시 없음 — 클라이언트 직접 호출)
 
-- **키 노출** → `KAKAO_REST_API_KEY`는 서버 전용. 클라이언트 번들·응답·에러 메시지로 새는지 확인
+- **키 하드코딩** → `VITE_KAKAO_REST_API_KEY`는 `import.meta.env`로만 참조. 번들 노출 자체는 과제 전제이므로 문제 대상이 아니고, **소스에 키 리터럴을 직접 박았는지**가 진단 포인트
 - **응답 shape 불일치** → 카카오 응답(`documents`, `meta`)과 프론트 interface 필드/optional 교차 확인
-- **에러 전파** → 카카오 4xx/5xx·타임아웃을 프론트가 처리 가능한 코드로 매핑했는지. 미검증 passthrough 금지
-- **dev 첫 진입 지연 오인** → 첫 컴파일 지연(수 초)은 서버 로직 문제가 아님. 두 번째 요청 latency로 실제 성능 측정
+- **에러 전파** → 카카오 4xx/5xx·타임아웃을 axios 인터셉터가 프론트가 처리 가능한 코드로 매핑했는지. 미검증 passthrough 금지
+- **dev 첫 진입 지연 오인** → Vite dev 서버 첫 모듈 변환 지연(수 초)은 로직 문제가 아님. 두 번째 요청 latency로 실제 성능 측정
 
 ---
 

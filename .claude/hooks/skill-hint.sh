@@ -1,6 +1,6 @@
 #!/bin/bash
 # UserPromptSubmit hook — 프롬프트 키워드 분석 → 관련 스킬/룰 힌트 자동 주입
-# 참조 대상은 실제 존재하는 자산만: skills(planning/review/review-ui/security/ship/nextjs/zoom-out),
+# 참조 대상은 실제 존재하는 자산만: skills(planning/review/review-ui/security/ship/zoom-out),
 # rules(conventions/react/karpathy-principles/ai-defense/accessibility/anti-patterns/external-docs/page),
 # references(debugging).
 
@@ -17,14 +17,14 @@ fi
 
 SKILLS=()
 
-# 카카오 도서 검색 API / 프록시 Route Handler → nextjs + security (서버 전용 키 은닉)
-if echo "$PROMPT" | grep -qiE '카카오|kakao|/api[^-]|API|프록시|proxy|route handler|엔드포인트|endpoint|검색|search|도서'; then
-  SKILLS+=(".claude/skills/nextjs/SKILL.md" ".claude/skills/security/SKILL.md")
+# 카카오 도서 검색 API / 클라이언트 직접 호출 데이터 계층 → security(키 은닉) + react·conventions 룰
+if echo "$PROMPT" | grep -qiE '카카오|kakao|/api[^-]|API|엔드포인트|endpoint|검색|search|도서|axios|인터셉터|queryKey'; then
+  SKILLS+=(".claude/skills/security/SKILL.md" ".claude/rules/react.md" ".claude/rules/conventions.md")
 fi
 
-# 페이지/라우팅/서버 컴포넌트 → nextjs 스킬 + page 룰
-if echo "$PROMPT" | grep -qiE '/nextjs|페이지|page|라우팅|route|SSR|서버 컴포넌트|미들웨어|middleware|nextjs|next\.js|app router'; then
-  SKILLS+=(".claude/skills/nextjs/SKILL.md" ".claude/rules/page.md")
+# 페이지/라우팅/SPA(react-router) → page 룰
+if echo "$PROMPT" | grep -qiE '페이지|page|라우팅|route|라우터|router|react-router|SPA|찜|favorites'; then
+  SKILLS+=(".claude/rules/page.md")
 fi
 
 # 보안 → security 스킬

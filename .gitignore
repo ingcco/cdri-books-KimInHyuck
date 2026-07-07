@@ -1,10 +1,10 @@
 # dependencies
 node_modules/
 
-# next.js
-.next/
-out/
-next-env.d.ts
+# vite
+dist/
+dist-ssr/
+*.local
 
 # env — 카카오 REST 키 보호 (제출 시 이메일로 별도 공유)
 .env
@@ -22,3 +22,8 @@ test-results/
 *.log
 .vercel
 *.tsbuildinfo
+
+# scaffold 보강
+*.pem
+/build
+.pnpm-debug.log*

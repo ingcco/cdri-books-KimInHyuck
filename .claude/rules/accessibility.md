@@ -1,14 +1,13 @@
 ---
 description: "접근성 — a11y 최소 요건, 색상 대비, 키보드 내비게이션, ARIA 속성 체크. 검색 인풋·찜 토글·도서 카드 리스트 기준."
 paths:
-  - "app/**/*.tsx"
-  - "app/**/*.ts"
-  - "components/**/*.tsx"
+  - "src/**/*.tsx"
+  - "src/**/*.ts"
 ---
 
 # 접근성 규칙 — WCAG 2.2 AA
 
-웹 콘텐츠 접근성 가이드라인 2.2 Level AA 기준 규칙. `app/**` 및 `components/**` 편집 시 자동 로드.
+웹 콘텐츠 접근성 가이드라인 2.2 Level AA 기준 규칙. `src/**` 편집 시 자동 로드.
 
 출처:
 
@@ -49,7 +48,7 @@ paths:
 - Primary × Background, Text × Background 조합은 최소 **4.5:1**
 - **라이트/다크 쌍 토큰 의무** — 의미 토큰(primary, background, foreground 등)은 `@theme`(라이트) + `[data-theme="dark"]`(다크) **양쪽에 정의**, 대비 검증도 양 모드 모두 수행. 다크 미지원 시 이 규칙은 스킵 가능.
 
-### 컴포넌트 (`components/**`)
+### 컴포넌트 (`src/components/**`)
 
 - **아이콘 전용 버튼**: `aria-label` 필수 — 예: 검색 버튼(`aria-label="검색"`), 검색어 삭제 버튼(`aria-label="검색어 지우기"`)
 - **찜 토글 버튼**: 토글 상태는 `aria-pressed`로 노출. 색상(하트 채움)만으로 상태 전달 금지 — `aria-label`을 상태에 맞게(`"찜하기"`/`"찜 해제"`) 갱신
@@ -71,7 +70,7 @@ paths:
 - **Loading 상태**: 검색 로딩 인디케이터는 `role="status"` + `aria-live="polite"` 또는 `aria-busy`
 - **Modal/Dialog**(상세검색 모달 등): `role="dialog"`, `aria-modal="true"`, focus trap, ESC 닫기, 이전 포커스 복원
 
-### 페이지 (`app/**/page.tsx`)
+### 페이지 (`src/pages/**/*Page.tsx`)
 
 - **Heading 순서**: h1 → h2 → h3 … 건너뛰기 금지
 - **Landmark roles**: `<main>`, `<nav>`, `<header>`, `<footer>` 명시

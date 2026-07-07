@@ -35,9 +35,9 @@
 
 ### 재사용
 
-- [ ] [M·Mai] `lib/`에 동일 유틸 함수 존재 시 재구현 금지
-- [ ] [M·Mai] `hooks/`에 동일 훅 존재 시 재구현 금지
-- [ ] [M·Mai] `components/`에 동일 컴포넌트 존재 시 직접 구현 금지
+- [ ] [M·Mai] `src/lib/`에 동일 유틸 함수 존재 시 재구현 금지
+- [ ] [M·Mai] `src/hooks/`에 동일 훅 존재 시 재구현 금지
+- [ ] [M·Mai] `src/components/`에 동일 컴포넌트 존재 시 직접 구현 금지
 
 ### 브라우저 호환성
 
@@ -62,7 +62,7 @@
 - [ ] [n·Con] Context 구조분해 직접 할당 (`const { xxx } = useContext()`)
 - [ ] [M·Mai] 불필요한 래퍼 훅 없음 — context에서 직접 가져오기
 - [ ] [M·Con] `register` 미사용 → `Controller` 통일 (form 관련 파일)
-- [ ] [B·Cor] SSR 안전성 — `typeof window === "undefined"` 가드 (localStorage 등 브라우저 API 접근 시)
+- [ ] [B·Cor] 브라우저 API 환경 가드 — `typeof window === "undefined"` 가드 (localStorage 등 브라우저 API를 모듈 최상위에서 접근 시, Vitest `node` 환경의 unit 테스트에서 no-throw 보장)
 
 ---
 

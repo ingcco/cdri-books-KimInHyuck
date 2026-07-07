@@ -25,11 +25,11 @@ git diff --cached --name-only
 
 UI 관련 변경 파일 식별:
 
-- `components/**` (자체 UI 컴포넌트) → 해당 컴포넌트를 사용하는 페이지에서 검증
-- `app/**/page.tsx` → 해당 페이지 검증
-- `app/**/*.tsx` (모달·리스트 등) → 해당 컴포넌트를 포함하는 페이지 검증
+- `src/components/**` (자체 UI 컴포넌트) → 해당 컴포넌트를 사용하는 페이지에서 검증
+- `src/pages/**/*Page.tsx` → 해당 페이지 검증
+- `src/pages/**/components/**` (모달·리스트 등 페이지 로컬 컴포넌트) → 해당 컴포넌트를 포함하는 페이지 검증
 
-> 주요 화면: `/` (도서 검색), `/favorites` (찜 목록). 실제 라우트는 `app/` 구조를 확인해 매핑한다.
+> 주요 화면: `/` (도서 검색), `/favorites` (찜 목록). 실제 라우트는 `src/main.tsx`의 react-router 설정을 확인해 매핑한다.
 
 ### 2. dev 서버 확인
 
@@ -135,7 +135,7 @@ cat .playwright-tmp/lighthouse-report.json | jq '{
 | Accessibility | >= 90  | 미달 시 위반 사항으로 보고               |
 | Performance   | 참고용 | dev 서버라 정확도 낮음. 50 미만이면 경고 |
 
-> **주의**: `next dev`는 개발 모드라 Performance 점수가 낮게 나옴. 정확한 성능 측정은 `next build && next start` 후 실행 필요. Accessibility 점수는 dev 모드에서도 유효.
+> **주의**: `vite dev`는 개발 모드라 Performance 점수가 낮게 나옴(번들 미압축·HMR 오버헤드). 정확한 성능 측정은 `pnpm build && pnpm preview` 후 실행 필요. Accessibility 점수는 dev 모드에서도 유효.
 
 **Lighthouse 위반 자동 수정:**
 

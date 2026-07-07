@@ -18,7 +18,8 @@ AI 어시스턴트는 학습 데이터 시점의 도메인을 추측해 fetch하
 | 벤더                | 정답 도메인                                          | 흔한 오답 (피하기)                            |
 | ------------------- | ---------------------------------------------------- | --------------------------------------------- |
 | **카카오 (Kakao)**  | `developers.kakao.com/docs/latest/ko/...` (도서 검색 REST API) | 구 `developers.kakao.com/docs/restapi/...` (레거시 경로) |
-| **Next.js**         | `nextjs.org/docs/...`                                | -                                             |
+| **Vite**            | `vite.dev/guide/...`                                 | `vitejs.dev/...` (구 도메인, 리다이렉트)      |
+| **react-router**    | `reactrouter.com/...` (v7)                           | `reactrouter.com/en/6...` (구버전 경로)       |
 | **React**           | `react.dev/...`                                      | `reactjs.org/docs/...` (구버전)               |
 | **Tailwind CSS**    | `tailwindcss.com/docs/...`                           | -                                             |
 | **TanStack Query**  | `tanstack.com/query/latest/docs/...`                 | `react-query.tanstack.com` (구버전)           |
@@ -52,7 +53,8 @@ WebFetch가 4xx/5xx 반환 시 다음 순서로 시도:
 
 | 라이브러리 | 이슈 트래커 |
 |---|---|
-| Next.js | `github.com/vercel/next.js/issues` |
+| Vite | `github.com/vitejs/vite/issues` |
+| react-router | `github.com/remix-run/react-router/issues` |
 | TanStack Query | `github.com/TanStack/query/issues` |
 | nuqs | `github.com/47ng/nuqs/issues` |
 | react-hook-form | `github.com/react-hook-form/react-hook-form/issues` |

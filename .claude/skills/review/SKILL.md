@@ -71,27 +71,26 @@ Gate 미달 시 → `/ship` 전에 반드시 수정 필요.
 
 변경 파일의 경로로 아래 매핑 표에서 필요한 references만 선택적으로 로드한다. 모든 체크리스트를 한 번에 읽지 않음.
 
-| 파일 유형         | 매칭 패턴                                | 로드할 references                        |
-| ----------------- | ---------------------------------------- | ---------------------------------------- |
-| **페이지**        | `app/**/page.tsx`, `page.style.ts`       | `common.md` + `app.md` [페이지]          |
-| **페이지 Hook**   | `app/**/hooks/use*.ts`, `hooks/**`       | `common.md` + `app.md` [페이지Hook]      |
-| **API Route**     | `app/api/**/route.ts`                    | `common.md` + `app.md` [API Route]       |
-| **API/데이터**    | `lib/api/**`, `lib/**`                   | `common.md` + `app.md` [API 모듈]        |
-| **UI 컴포넌트**   | `components/**`                          | `common.md` [React]                      |
-| **테스트**        | `__tests__/**`, `*.test.ts`, `*.spec.ts` | `common.md` [테스트]                     |
-| **기타**          | 그 외                                    | `common.md`                              |
+| 파일 유형         | 매칭 패턴                                    | 로드할 references                             |
+| ----------------- | --------------------------------------------- | ---------------------------------------------- |
+| **페이지**        | `src/pages/**/*Page.tsx`, `styles/page.style.ts` | `common.md` + `page-data.md` [페이지]       |
+| **페이지 Hook**   | `src/pages/**/hooks/use*.ts`                 | `common.md` + `page-data.md` [페이지Hook]      |
+| **API/데이터**    | `src/lib/api/**`, `src/lib/storage/**`       | `common.md` + `page-data.md` [API 모듈]        |
+| **UI 컴포넌트**   | `src/components/**`                          | `common.md` [React]                            |
+| **테스트**        | `__tests__/**`, `*.test.ts`, `*.spec.ts`     | `common.md` [테스트]                           |
+| **기타**          | 그 외                                        | `common.md`                                    |
 
 ### references/ 구조
 
 | 파일                                                                   | 다루는 범위                                              |
 | ---------------------------------------------------------------------- | -------------------------------------------------------- |
 | [`references/checklists/common.md`](./references/checklists/common.md) | [공통] 모든 파일 + [React] 컴포넌트/Hook 공통             |
-| [`references/checklists/app.md`](./references/checklists/app.md)        | [페이지] + [페이지Hook] + [API Route] + [API 모듈]       |
+| [`references/checklists/page-data.md`](./references/checklists/page-data.md) | [페이지] + [페이지Hook] + [API 모듈]        |
 
 **사용 규칙**:
 
 - 본 SKILL.md + `common.md`는 거의 항상 로드
-- `app.md`는 `app/` 또는 `lib/` 경로가 diff에 포함될 때만 로드
+- `page-data.md`는 `src/pages/` 또는 `src/lib/` 경로가 diff에 포함될 때만 로드
 - 여러 유형이 섞인 PR은 여러 절 동시 참조 가능
 
 ---
@@ -127,8 +126,8 @@ git diff --cached --name-only
 
 #### 3.1 Correctness 차원 평가
 
-- **담당 체크리스트**: React Hook 규칙, SSR 안전성, API 패턴, 3파일 패턴, 방어적 반환
-- **Progressive Disclosure**: `common.md` [공통 + React], `app.md` [페이지/API] 중 해당 경로만 로드
+- **담당 체크리스트**: React Hook 규칙, 브라우저 API 환경 가드(localStorage 등), API 패턴, 페이지 수직 슬라이스 패턴, 방어적 반환
+- **Progressive Disclosure**: `common.md` [공통 + React], `page-data.md` [페이지/API] 중 해당 경로만 로드
 - **감점 태그**: `[B·Cor]` -20, `[M·Cor]` -10, `[m·Cor]` -3, `[n·Cor]` -1
 - **재현/검증** (Independent Verification):
   - 각 위반 발견 시 `git diff` 또는 파일 내용에서 **실제로 재현 가능한지** 확인
@@ -151,15 +150,15 @@ git diff --cached --name-only
 
 #### 3.4 Consistency 차원 평가
 
-- **담당 체크리스트**: 파일 유형별 패턴 준수 (3파일 패턴, Memo/Handler, Query hook 등)
-- **Progressive Disclosure**: `app.md` [페이지/페이지Hook], `common.md` [React]
+- **담당 체크리스트**: 파일 유형별 패턴 준수 (페이지 수직 슬라이스, Memo/Handler, Query hook 등)
+- **Progressive Disclosure**: `page-data.md` [페이지/페이지Hook], `common.md` [React]
 - **감점 태그**: `[B·Con]` -20, `[M·Con]` -10, `[m·Con]` -3, `[n·Con]` -1
 - **재현/검증**: 기존 프로젝트 패턴과 비교하여 실제 일관성 위반 확인
 
 #### 3.5 Performance 차원 평가
 
 - **담당 체크리스트**: deps 최소화, 참조 안정성, Memo/Handler 객체 패턴, 서버 값 중복 재계산
-- **Progressive Disclosure**: `common.md` [React 공통], `app.md` [페이지Hook]
+- **Progressive Disclosure**: `common.md` [React 공통], `page-data.md` [페이지Hook]
 - **감점 태그**: `[B·Per]` -20, `[M·Per]` -10, `[m·Per]` -3, `[n·Per]` -1
 - **재현/검증**: 성능 이슈는 실제 코드 경로에서 재현 (예: deps 3개는 실제로 존재 확인)
 

@@ -1,25 +1,26 @@
 # 구현 체크리스트
 
-단독 Next.js 앱(App Router)에서 자주 반복되는 구현 단위별 체크리스트. plan의 Step을 세분화할 때 참조.
+단독 Vite + React CSR 앱(react-router)에서 자주 반복되는 구현 단위별 체크리스트. plan의 Step을 세분화할 때 참조.
 
 ## 새 페이지 추가 시
 
-### 1. 라우트 파일 (3파일 분리)
+### 1. 수직 슬라이스 파일 (page.md 기준)
 
-- [ ] `app/{route}/page.tsx` 생성 (마크업 + 조립)
-- [ ] `app/{route}/page.style.ts` 생성 (`pageVariants` — tailwind-variants, 구조적 레이아웃 slots만)
-- [ ] `app/{route}/hooks/use{Route}.ts` 생성 (상태 + React Query + 핸들러)
+- [ ] `src/pages/{Name}Page/{Name}Page.tsx` 생성 (얇은 조립 — Context.Provider + 컴포넌트 배치)
+- [ ] `src/pages/{Name}Page/styles/page.style.ts` 생성 (`pageVariants` — tailwind-variants, 구조적 레이아웃 slots만)
+- [ ] `src/pages/{Name}Page/hooks/use{Name}.ts` 생성 (상태 + React Query + 핸들러 + Context value)
+- [ ] `src/main.tsx` 라우터 설정에 라우트 등록 (react-router `createBrowserRouter`)
 
 ### 2. 데이터 연결
 
 - [ ] React Query 훅 작성 (`use{Domain}Query` / `use{Domain}Mutation`)
 - [ ] URL 상태는 nuqs로 관리 (검색어, 페이지 등)
-- [ ] 폼이 있으면 RHF + zod (Controller 통일)
+- [ ] 폼이 필요하고 실제 검증 로직이 있으면 RHF + zod, 고정 옵션 select 등 검증 대상이 없으면 `useState`로 충분(과잉 엔지니어링 금지 — 상세검색 폼이 실례)
 
 ### 3. 검증
 
 ```bash
-pnpm typecheck
+pnpm check-types
 pnpm lint
 ```
 
@@ -31,19 +32,18 @@ pnpm lint
 
 ### 1. 컴포넌트 파일
 
-- [ ] `components/{Component}.tsx` 생성 (재사용 UI는 `components/`, 페이지 전용은 해당 route 하위)
-- [ ] "use client" 지시문 (상태/이벤트 있을 때만)
+- [ ] `src/components/{Component}.tsx` 생성 (2곳 이상 라우트에서 쓰는 공유 UI만 `src/components/`, 단일 페이지 전용은 해당 페이지 슬라이스의 `components/` 하위)
 - [ ] tailwind-variants로 스타일 정의 (`@theme` 토큰 사용, 하드코딩 값 금지)
 - [ ] Props 타입 정의 및 export
 
 ### 2. 재사용 확인
 
-- [ ] `components/`에 동일 기능 컴포넌트가 이미 있는지 확인 (중복 구현 금지)
+- [ ] `src/components/`에 동일 기능 컴포넌트가 이미 있는지 확인 (중복 구현 금지)
 
 ### 3. 검증
 
 ```bash
-pnpm typecheck
+pnpm check-types
 pnpm lint
 ```
 
@@ -53,25 +53,25 @@ pnpm lint
 
 ### 1. API 함수
 
-- [ ] `lib/api/` 아래 axios 요청 함수 작성 (`{동사}{Domain}` 네이밍)
-- [ ] 응답 타입 정의 (카카오 도서 API 응답 shape에 맞게)
+- [ ] `src/lib/api/{domain}/api.ts` 아래 axios 요청 함수 작성 (`{동사}{Domain}` 네이밍)
+- [ ] 응답 타입 정의 (카카오 도서 API 응답 shape에 맞게, 응답 그대로 반환 — 임의 변환 금지)
 
 ### 2. 쿼리 훅
 
 - [ ] `use{Domain}Query` / `use{Domain}Mutation` 작성
-- [ ] queryKey 설계 (검색어·페이지 등 파라미터 포함)
+- [ ] queryKey 설계 (검색어·페이지 등 파라미터 포함, `src/lib/api/shared/queryKeys.ts` 팩토리)
 - [ ] 구조분해 금지 — `const xxxQuery = useXxxQuery()`
 
 ### 3. 테스트
 
-- [ ] MSW로 카카오 API 응답 목킹 → 훅 통합 테스트 (Vitest)
+- [ ] MSW(node)로 `dapi.kakao.com` 응답 목킹 → 훅 통합 테스트 (Vitest)
 
 ### 4. 검증
 
 ```bash
-pnpm typecheck
+pnpm check-types
 pnpm lint
-pnpm test
+pnpm test:integration
 ```
 
 ---
@@ -80,7 +80,7 @@ pnpm test
 
 ### 1. 함수 파일
 
-- [ ] `lib/` 아래 적절한 파일에 추가 또는 새 파일 생성
+- [ ] `src/lib/utils/` 아래 적절한 파일에 추가 또는 새 파일 생성
 - [ ] JSDoc 주석 (동작이 자명하지 않을 때만)
 - [ ] 타입 정의 + 함수 export
 
@@ -92,9 +92,9 @@ pnpm test
 ### 3. 검증
 
 ```bash
-pnpm typecheck
+pnpm check-types
 pnpm lint
-pnpm test
+pnpm test:unit
 ```
 
 ---
@@ -102,10 +102,11 @@ pnpm test
 ## 공통 검증 명령어
 
 ```bash
-pnpm typecheck   # 타입 체크
-pnpm lint        # 린트
-pnpm test        # 테스트
-pnpm build       # 빌드 확인
+pnpm check-types   # 타입 체크
+pnpm lint          # 린트
+pnpm test:unit     # 단위 테스트
+pnpm test:integration  # 통합 테스트(MSW)
+pnpm build         # 빌드 확인
 ```
 
 > 스크립트명은 프로젝트 `package.json`을 기준으로 확인 후 사용.
