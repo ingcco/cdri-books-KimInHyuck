@@ -33,14 +33,14 @@ const useFavoriteBooks = (books: Book[], ids: string[]) => {
 ```typescript
 // ❌ 의존성 3개 이상
 useEffect(() => {
-  searchBooks(query, sort, page);
+  getBookList(query, sort, page);
 }, [query, sort, page]);
 
 // ✅ 하나의 파생 값으로 통합 — 대개 React Query가 이를 대신함
 const params = useMemo(() => ({ query, sort, page }), [query]);
 
 // ✅ 더 나은 방법 — useEffect 대신 React Query key로 파라미터 반응
-const booksQuery = useBookSearchQuery({ query, sort, page });
+const booksQuery = useBookListInfiniteQuery({ query, sort, page });
 ```
 
 ### useEffect 개수 가이드 (page-level hook)
@@ -62,7 +62,7 @@ const booksQuery = useBookSearchQuery({ query, sort, page });
 
 #### 사례 (도서 검색)
 
-`useBookSearch`가 검색 결과 fetch를 `useEffect + setState`로 하고 있으면 `useBookSearchQuery`(React Query)로 이전한다. URL 필터(nuqs)가 바뀌면 queryKey가 바뀌며 자동 refetch되므로 검색용 useEffect는 0개가 이상적이다.
+`useBookSearch`가 검색 결과 fetch를 `useEffect + setState`로 하고 있으면 `useBookListInfiniteQuery`(React Query)로 이전한다. URL 필터(nuqs)가 바뀌면 queryKey가 바뀌며 자동 refetch되므로 검색용 useEffect는 0개가 이상적이다.
 
 ## 브라우저 API 환경 가드
 
@@ -300,7 +300,7 @@ Hook 분리 원칙:
 ```ts
 // src/pages/SearchPage/hooks/useSearch.ts  ← JSX 없음(createContext는 함수 호출). Provider JSX는 SearchPage.tsx에
 import { createContext, useContext } from "react";
-import { EMPTY_BOOK_SEARCH, useBookSearchQuery } from "@/lib/api/books/api.queries";
+import { EMPTY_BOOK_LIST, useBookListInfiniteQuery } from "@/lib/api/books/api.queries";
 
 type SearchContextValue = ReturnType<typeof useSearch>;
 
@@ -313,9 +313,9 @@ const useSearchContext = () => {
 };
 
 const useSearch = () => {
-  // nuqs 필터 + useBookSearchQuery + searchHandler ...
-  const booksQuery = useBookSearchQuery(/* params */);
-  const data = booksQuery.data ?? EMPTY_BOOK_SEARCH;
+  // nuqs 필터 + useBookListInfiniteQuery + searchHandler ...
+  const booksQuery = useBookListInfiniteQuery(/* params */);
+  const data = booksQuery.data ?? EMPTY_BOOK_LIST;
   return { booksQuery, data /*, filters, searchHandler */ };
 };
 
@@ -462,10 +462,10 @@ const form = useForm({
 
 ```typescript
 // ✅ 구조분해 금지 — 객체 그대로 사용
-const booksQuery = useBookSearchQuery(params);
+const booksQuery = useBookListInfiniteQuery(params);
 
 // Query hook 정의: queryKey/queryFn 제외한 나머지 options 오버라이드 가능
 // 빈 검색어 게이트: enabled: query.trim().length > 0
-// 쿼리 키 팩토리: bookKeys = { all, search(params) } — lib/api/shared/queryKeys.ts
+// 쿼리 키 팩토리: bookKeys = { all, list(params) } — lib/api/shared/queryKeys.ts
 // EMPTY 상수 + placeholderData: 빈 응답 fallback으로 page에서 ?? 없이 접근
 ```

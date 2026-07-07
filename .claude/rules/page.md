@@ -26,7 +26,7 @@ paths:
 src/pages/SearchPage/
 ├── SearchPage.tsx              ← SearchContext.Provider + <SearchScreen />
 ├── hooks/
-│   └── useSearch.ts            ← nuqs 필터 + useBookSearchQuery + searchHandler + Context
+│   └── useSearch.ts            ← nuqs 필터 + useBookListInfiniteQuery + searchHandler + Context
 ├── components/
 │   ├── SearchBar.tsx           ← useSearchContext() 소비
 │   ├── BookList.tsx            ← useSearchContext() 소비
@@ -39,10 +39,12 @@ src/pages/SearchPage/
 데이터 계층(라우트 밖, 공유):
 
 ```
-src/lib/api/client/http.ts      ← axios 인스턴스 (dapi.kakao.com baseURL + KakaoAK Authorization 헤더)
-src/lib/api/books/api.ts        ← searchBooks() 등 순수 요청 함수 (카카오 { documents, meta } 그대로 반환)
-src/lib/api/books/api.queries.ts ← useBookSearchQuery 등 wrapper hook
-src/lib/api/shared/queryKeys.ts ← bookKeys 팩토리
+src/lib/api/index.ts               ← axios 인스턴스 (dapi.kakao.com baseURL + KakaoAK Authorization 헤더) + validateStatus로 성공(2xx) 판정
+src/lib/api/books/api.ts           ← getBookList() 등 순수 요청 함수 (카카오 { documents, meta } 그대로 반환)
+src/lib/api/books/api.queries.ts   ← useBookListInfiniteQuery 등 wrapper hook
+src/lib/api/books/api.interface.ts ← 이 도메인 요청/응답 타입
+src/lib/api/shared/{request,response}.ts ← 공유 요청/응답 타입
+src/lib/api/shared/queryKeys.ts    ← bookKeys 팩토리
 ```
 
 ## pageVariants — `tv()` 규약

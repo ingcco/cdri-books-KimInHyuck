@@ -25,7 +25,8 @@ export interface ButtonProps extends Omit<ComponentProps<"button">, "disabled"> 
 export type SearchTarget = "title" | "isbn" | "publisher" | "person";
 export type ButtonVariants = typeof buttonVariants;
 
-// 타입 정의 위치 — 사용하는 파일에 정의 (별도 types.ts 금지)
+// 타입 정의 위치 — 일반 코드는 사용하는 파일에 정의 (별도 types.ts 금지)
+// 예외: API 도메인 타입(src/lib/api/{domain}/)은 api.interface.ts로 분리 — api.ts(요청 함수)와 api.queries.ts(훅) 양쪽이 재사용
 // Props 확장 — Pick/Omit/intersection으로 소스 인터페이스에서 조합 (수동 재정의 금지)
 ```
 
@@ -46,11 +47,17 @@ src/pages/{Name}Page/
 데이터 계층:
 
 ```
-src/lib/api/client/http.ts          ← axios 인스턴스 (dapi.kakao.com baseURL + KakaoAK Authorization 헤더)
-src/lib/api/{domain}/api.ts         ← 순수 요청 함수 (axios 호출만, 카카오 응답 그대로 반환)
-src/lib/api/{domain}/api.queries.ts ← useQuery/useMutation wrapper hook
-src/lib/api/shared/queryKeys.ts     ← 쿼리 키 팩토리
+src/lib/api/index.ts                 ← axios 인스턴스 (dapi.kakao.com baseURL + KakaoAK Authorization 헤더) + validateStatus로 성공(2xx) 판정
+src/lib/api/{domain}/api.ts          ← 순수 요청 함수 (axios 호출만, 카카오 응답 그대로 반환)
+src/lib/api/{domain}/api.queries.ts  ← useQuery/useMutation wrapper hook
+src/lib/api/{domain}/api.interface.ts ← 이 도메인 요청/응답 타입
+src/lib/api/shared/{request,response}.ts ← 공유 요청/응답 타입(`FailResponse` = 카카오 게이트웨이 에러 바디)
+src/lib/api/shared/queryKeys.ts      ← 쿼리 키 팩토리
 ```
+
+> "client" 서브폴더 없음 — BFF/서버 없는 CSR 단독 앱이라 client/server를 대응시킬 대상 자체가 없음(Next.js 레퍼런스 구조의 vestige 제거, 2026-07-08)
+>
+> 에러 심각도(critical/recoverable) 분류는 http 클라이언트에 두지 않는다 — 소비 시점(페이지/React Query 에러 핸들링)에서 `error.response?.status`를 직접 참조해 판단(2026-07-08, 사전 분류용 `ApiError` 클래스는 과잉설계로 폐기)
 
 **규칙**:
 
@@ -111,19 +118,29 @@ const SearchPage = () => {
 - **Dropdown list·필터 옵션은 상수로** (`dropdownList.{domain}`). **page/컴포넌트에서 `useMemo`로 옵션 배열 생성 금지** — 정적 리스트는 모듈 상수가 참조 안정성 보장 (react.md "단독 useMemo 금지")
 - 3곳 미만 사용 상수는 인라인 허용 — `labels.ts`는 라벨 매핑 전용
 
-## 공유 요청 타입 (`src/lib/api/shared/request.type.ts`)
+## 공유 요청 타입 (`src/lib/api/shared/request.ts`)
 
 페이지네이션이 필요한 목록 요청 파라미터는 `Pageable`을 extend한다.
 
 ```typescript
-// src/lib/api/shared/request.type.ts
+// src/lib/api/shared/request.ts
 export interface Pageable {
   page?: number;
   size?: number;
 }
 
-// src/lib/api/books/api.ts
-export interface BookSearchParams extends Pageable {
+// src/lib/api/shared/response.ts — 카카오 다음 검색 API 공통 응답(문서 검색 전반이 documents+meta 동일 shape)
+export interface Response<T> {
+  documents: T[];
+  meta: {
+    total_count: number;
+    pageable_count: number;
+    is_end: boolean;
+  };
+}
+
+// src/lib/api/books/api.interface.ts
+export interface BookListParams extends Pageable {
   query: string;
   target?: SearchTarget;
   sort?: "accuracy" | "latest";
@@ -136,24 +153,20 @@ export interface BookSearchParams extends Pageable {
 
 | 패턴 | 적용 |
 | --- | --- |
-| **A (기본)** — 카카오 응답이 클라이언트 타입과 1:1 정합 | `return res.data;` 직접 반환 (`{ documents, meta }` = `BookSearchData` 그대로) |
+| **A (기본)** — 카카오 응답이 클라이언트 타입과 1:1 정합 | `return res.data;` 직접 반환 (`{ documents, meta }` = `Response<BookData>` 그대로) |
 | **B (변환 필요)** — 서버/클라 shape이 실제로 다름 (파생 값 계산, 정렬, 평탄화 등) | 변환 사유를 JSDoc에 명시 + 일관성 유지. React Query `select`에서 변환하는 것이 우선 |
 
 ```typescript
+// src/lib/api/books/api.ts
 // ✅ A — 동일 shape, 직접 반환
-export interface BookSearchResponse {
-  documents: Book[];
-  meta: { total_count: number; pageable_count: number; is_end: boolean };
-}
-
-export async function searchBooks(params: BookSearchParams): Promise<BookSearchResponse> {
-  const res = await http.get<BookSearchResponse>("/v3/search/book", { params });
+export async function getBookList(params: BookListParams): Promise<Response<BookData>> {
+  const res = await api.get<Response<BookData>>("/v3/search/book", { params });
   return res.data;
 }
 
 // ❌ 동일 shape인데 재포장 — 디버깅 어렵게 만듦
-export async function searchBooks(...): Promise<{ items: Book[]; total: number }> {
-  const res = await http.get(...);
+export async function getBookList(...): Promise<{ items: Book[]; total: number }> {
+  const res = await api.get(...);
   return { items: res.data.documents, total: res.data.meta.total_count };
 }
 ```
@@ -177,7 +190,7 @@ const [filters, setFilters] = useQueryStates({
 
 // 검색 debounce — client fetch(React Query)는 nuqs value를 useDebounce로 감싼다.
 const debouncedQuery = useDebounce(filters.query, 500);
-const booksQuery = useBookSearchQuery({
+const booksQuery = useBookListInfiniteQuery({
   query: debouncedQuery,
   target: filters.target,
   sort: filters.sort,
@@ -193,7 +206,7 @@ const searchHandler = {
 };
 ```
 
-**빈 검색어는 fetch를 건너뛴다** — `useBookSearchQuery`에서 `enabled: query.trim().length > 0`으로 게이트(빈 검색어 API 호출 금지).
+**빈 검색어는 fetch를 건너뛴다** — `useBookListInfiniteQuery`에서 `enabled: query.trim().length > 0`으로 게이트(빈 검색어 API 호출 금지).
 
 **`{Name}Page.tsx` — value/onChange 직접 바인딩** (URL 필터는 검증 없음 → Controller 불필요):
 

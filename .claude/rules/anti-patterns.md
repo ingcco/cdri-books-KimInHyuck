@@ -154,14 +154,14 @@ export const http = {
 
 ```ts
 // ✅ After — axios 인스턴스는 베이스 그대로 export, 헤더 주입은 인스턴스 설정으로
-// src/lib/api/client/http.ts
-export const http = axios.create({
+// src/lib/api/index.ts
+export const api = axios.create({
   baseURL: "https://dapi.kakao.com",
   headers: { Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}` },
 });
 ```
 
-**WHY**: 같은 이름은 같은 동작을 약속. wrapper가 부수효과(인증/로깅)를 추가했는데 이름이 같으면 호출자가 라이브러리 동작을 가정하고 디버깅 시점에 차이 발견. axios 인스턴스는 설정으로 헤더를 주입하고 이름은 `http`(베이스)로 명확히.
+**WHY**: 같은 이름은 같은 동작을 약속. wrapper가 부수효과(인증/로깅)를 추가했는데 이름이 같으면 호출자가 라이브러리 동작을 가정하고 디버깅 시점에 차이 발견. axios 인스턴스는 설정으로 헤더를 주입하고 이름은 `api`(베이스)로 명확히.
 
 ---
 
@@ -196,9 +196,9 @@ function checkIsPageValid(p)  { return { ok: true | false, reason?: string }; }
 ### PR-3 함수에 숨은 부수효과 — Major
 
 ```ts
-// ❌ Before — searchBooks가 로깅까지 — 이름에 안 드러남
-async function searchBooks(params): Promise<BookSearchResponse> {
-  const res = await http.get("/v3/search/book", { params });
+// ❌ Before — getBookList가 로깅까지 — 이름에 안 드러남
+async function getBookList(params): Promise<Response<BookData>> {
+  const res = await api.get("/v3/search/book", { params });
   logging.log("search_performed");  // 숨은 로직
   return res.data;
 }
@@ -207,11 +207,11 @@ async function searchBooks(params): Promise<BookSearchResponse> {
 ```ts
 // ✅ After — api 함수는 순수, 부수효과는 호출부/React Query 콜백에서 명시
 // src/lib/api/books/api.ts
-async function searchBooks(params): Promise<BookSearchResponse> {
-  const res = await http.get("/v3/search/book", { params });
+async function getBookList(params): Promise<Response<BookData>> {
+  const res = await api.get("/v3/search/book", { params });
   return res.data;
 }
-// 로깅이 필요하면 useBookSearchQuery 콜백 또는 이벤트 핸들러에서
+// 로깅이 필요하면 useBookListInfiniteQuery 콜백 또는 이벤트 핸들러에서
 ```
 
 **WHY**: 함수 이름과 반환 타입으로 예측되지 않는 동작(로깅/스토리지 쓰기 등)이 안에 숨어 있으면 호출자가 디버깅 시 추적 어려움. 부수효과는 호출부에서 명시적으로. `src/lib/api/{domain}/api.ts`는 axios 호출만 — Toast 등은 React Query `onSuccess`/이벤트 핸들러에서.
@@ -260,7 +260,7 @@ export class RateLimitError extends AppError {
 ```ts
 // ❌ 내부 함수 호출에 try/catch (이미 상위/React Query가 잡음)
 try {
-  const res = await searchBooks(params);
+  const res = await getBookList(params);
 } catch (e) {
   console.error(e);
   throw e;
@@ -270,8 +270,8 @@ try {
 ```ts
 // ✅ 시스템 경계(외부 API 호출, 사용자 입력)에서만 처리 — 대개 React Query onError에 위임
 const booksQuery = useQuery({
-  queryKey: bookKeys.search(params),
-  queryFn: () => searchBooks(params),
+  queryKey: bookKeys.list(params),
+  queryFn: () => getBookList(params),
 });
 // 에러 표시는 onError(Toast) 또는 error boundary
 ```
@@ -322,7 +322,7 @@ try {
 // ❌ SearchPage.tsx 안에서 필터/상태 보유
 const SearchPage = () => {
   const [query, setQuery] = useState("");
-  const booksQuery = useBookSearchQuery({ query });
+  const booksQuery = useBookListInfiniteQuery({ query });
   // ...
 };
 ```
@@ -349,12 +349,12 @@ const SearchPage = () => {
 
 ```ts
 // ❌ 구조분해 — refetch/isPending/error 등을 매번 추가 destructure
-const { data } = useBookSearchQuery(params);
+const { data } = useBookListInfiniteQuery(params);
 ```
 
 ```ts
 // ✅ 객체 그대로
-const booksQuery = useBookSearchQuery(params);
+const booksQuery = useBookListInfiniteQuery(params);
 // booksQuery.data, booksQuery.isPending, booksQuery.refetch ...
 ```
 
@@ -450,7 +450,7 @@ const useFavorites = () => { /* 찜 로컬 상태만 */ };
 ```tsx
 // ❌ Before — 페이지가 로딩/에러 분기 + 재시도 로직까지 인라인 보유
 function SearchPage() {
-  const booksQuery = useBookSearchQuery(params);
+  const booksQuery = useBookListInfiniteQuery(params);
   if (booksQuery.isError) { /* 재시도 UI 인라인 */ }
   return <>{/* ... */}</>;
 }
@@ -477,13 +477,13 @@ function SearchPage() {
 
 ```ts
 // ❌ Before — generic 3번째 인자로 실제 shape과 다른 타입 강제
-const { data } = useQuery<BookSearchResponse, Error, Book[]>({ queryKey, queryFn });
+const { data } = useQuery<Response<BookData>, Error, BookData[]>({ queryKey, queryFn });
 data.some(...);  // 런타임 오류 — data는 사실 { documents, meta } 객체
 ```
 
 ```ts
 // ✅ After — select로 변환
-const booksQuery = useQuery<BookSearchResponse, Error, Book[]>({
+const booksQuery = useQuery<Response<BookData>, Error, BookData[]>({
   queryKey, queryFn,
   select: (res) => res.documents,
 });
@@ -614,9 +614,9 @@ useEffect(() => {
 ### RX-12 React Query data를 useMemo로 재가공 — Major
 
 ```ts
-// ❌ Before — useBookSearchQuery 결과를 다시 memo 객체로 가공
+// ❌ Before — useBookListInfiniteQuery 결과를 다시 memo 객체로 가공
 const useSearch = () => {
-  const booksQuery = useBookSearchQuery(params);
+  const booksQuery = useBookListInfiniteQuery(params);
   const searchMemo = {
     documents: useMemo(() => booksQuery.data?.documents ?? [], [booksQuery.data]),
     totalCount: booksQuery.data?.meta.total_count ?? 0,
@@ -628,8 +628,8 @@ const useSearch = () => {
 ```ts
 // ✅ After — query 그대로 반환. fallback은 ?? EMPTY narrowing 한 줄
 const useSearch = () => {
-  const booksQuery = useBookSearchQuery(params);
-  const data = booksQuery.data ?? EMPTY_BOOK_SEARCH;
+  const booksQuery = useBookListInfiniteQuery(params);
+  const data = booksQuery.data ?? EMPTY_BOOK_LIST;
   return { booksQuery, data };
 };
 // page: data.documents, data.meta.total_count 직접 사용
@@ -637,7 +637,7 @@ const useSearch = () => {
 
 **WHY**: React Query는 같은 응답에 대해 동일 reference를 유지(structural sharing). data 자체가 stable이라 다시 `useMemo`로 감싸면 (1) 무의미한 의존성 추적 비용, (2) hook 반환이 query + memo로 혼재되어 `PR-2` 위반, (3) `total_count` 같은 1차 derived는 인라인이 자연스러움. **TS narrowing(`?? EMPTY`) + `placeholderData`** 조합으로 page에서 `?? []` 없이 직접 접근 가능.
 
-**보조 처방**: `src/lib/api/books/api.queries.ts`에 `EMPTY_BOOK_SEARCH` 상수 + `placeholderData` 명시 → hook은 `?? EMPTY`로 narrowing.
+**보조 처방**: `src/lib/api/books/api.queries.ts`에 `EMPTY_BOOK_LIST` 상수 + `placeholderData` 명시 → hook은 `?? EMPTY`로 narrowing.
 
 **관련**: `RX-2`, `react.md` Handler/Memo 객체
 

@@ -229,11 +229,11 @@ grep -rEn "(apiKey|API_KEY|token)\s*[:=]\s*['\"][A-Za-z0-9]{20,}['\"]" src 2>/de
 
 ## 프로젝트 특화 체크
 
-### 카카오 API 클라이언트 (`src/lib/api/client/http.ts`, BFF/프록시 없음)
+### 카카오 API 클라이언트 (`src/lib/api/index.ts`, BFF/프록시 없음)
 
 > 이 앱은 카카오 API를 클라이언트에서 직접 호출한다. 키의 **번들 노출은 과제 전제**(`.env` 이메일 제출 방식)이므로 "서버 은닉"이 아니라 아래 3가지를 불변식으로 확인한다(CLAUDE.md "보안 불변식" SOT).
 
-- [ ] 키 주입은 axios 인스턴스 한 곳(`src/lib/api/client/http.ts`)에 집중, `import.meta.env.VITE_KAKAO_REST_API_KEY`로만 참조 (소스에 `KakaoAK <실키>` 하드코딩 없음)
+- [ ] 키 주입은 axios 인스턴스 한 곳(`src/lib/api/index.ts`)에 집중, `import.meta.env.VITE_KAKAO_REST_API_KEY`로만 참조 (소스에 `KakaoAK <실키>` 하드코딩 없음)
 - [ ] `.env`·`.env.local`이 `.gitignore`에 있고 커밋 이력에 없음. `.env.example`은 placeholder만
 - [ ] 페이지네이션 상한·검색어 검증으로 upstream 남용/rate-limit 소진 방지
 - [ ] 카카오 에러 응답은 인터셉터에서 안전한 메시지로 치환 (→ (e), 원문 그대로 노출 금지)

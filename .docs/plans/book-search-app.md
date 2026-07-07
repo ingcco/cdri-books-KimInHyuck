@@ -101,24 +101,31 @@ sequenceDiagram
 
 ### Phase 2: 데이터 계층 (카카오 직접 호출 — Route Handler 프록시 없음)
 
-- [ ] Step 2.1: API 클라이언트
-  - 작업: `src/lib/api/client/http.ts` — axios 인스턴스(`baseURL: https://dapi.kakao.com`, `Authorization: KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`) + 인터셉터로 에러 정규화(401/429/5xx 등 안전한 메시지 매핑, 키 원문 미노출)
-  - 검증: unit 테스트 (인터셉터 에러 매핑 — 401/429/5xx 각 케이스)
-- [ ] Step 2.2: 도서 검색 API — **React Query 무한 스크롤**
-  - 작업: `src/lib/api/books/{api.ts,api.queries.ts}` — `searchBooks()`(query/target/page/size, 카카오 `{ documents, meta }` 그대로 반환), `useBookSearchInfiniteQuery`(`useInfiniteQuery` + `keepPreviousData`, `meta.is_end` 기반 `getNextPageParam` 종료조건), `src/lib/api/shared/queryKeys.ts`
-  - 검증: integration 테스트 — MSW(node)로 `dapi.kakao.com` 스텁(성공/빈결과/400/401/429/500, target 매핑) + **`getNextPageParam` 종료조건 오판 시 무한 요청 루프 방지 케이스**(is_end=true 이후 추가 fetch 안 함) 명시 테스트
-- [ ] Step 2.3: 찜/검색기록 저장소
-  - 작업: `src/lib/storage/{favorites.ts,searchHistory.ts}`(localStorage, max 8 FIFO, 브라우저 환경 가드) + `src/lib/api/favorites/api.queries.ts`(RQ로 래핑 — 캐시 무효화로 페이지 간 동기화)
-  - 검증: unit 테스트 (8개 초과 FIFO, 토글, 브라우저 환경 아닌 곳에서 no-throw)
-- [ ] Step 2.4: 게이트 범위 축소(2026-07-08 재검토) — Next.js 시절 "전 도메인 integration 통과" 게이트는 백엔드 없는 axios 단일 계층엔 과함. **http 인터셉터(에러 정규화) + 무한스크롤 쿼리(종료조건)만 게이트**, favorites는 자체 unit 테스트로 충분(순수 localStorage라 통합 리스크 없음)
+- [x] Step 2.1: API 클라이언트
+  - 작업: `src/lib/api/index.ts` — axios 인스턴스(`baseURL: https://dapi.kakao.com`, `Authorization: KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`), `validateStatus: (status) => status >= 200 && status < 300`로 성공 판정 — 나머지는 axios가 그대로 reject(web-andrsen `src/api/index.ts`와 동일 패턴). 인터셉터·로깅 없음 — DEV 콘솔 로그도 불필요 판단으로 제거(2026-07-08). `src/lib/api/shared/response.ts`에 `FailResponse{errorType,message}` 타입만 정의 — **라이브 curl로 확인한 API 게이트웨이 실포맷**(예: `AccessDeniedError`/`ResourceNotFound`, `x-apihub-error-from: apihub` 헤더로 확인, 2026-07-08), 아직 아무 곳에서도 import 안 함(Step 2.2에서 필요해지면 사용)
+  - **철회(2026-07-08)**: 최초 설계했던 `ApiError extends Error { status, message, severity }`(critical/recoverable 2분류 + 상태별 메시지 매핑)는 **과잉설계로 판단해 폐기**. http 클라이언트 레이어에서 UX 분류까지 미리 정할 필요 없음 — `error.response?.status`가 표준 `AxiosError`에 그대로 남아있으니 critical(에러 페이지)/recoverable(토스트) 판단은 **Step 4.1(실제 소비 시점)**로 이연
+  - 검증: 없음(로직 없는 설정 파일이라 unit 테스트 대상 아님) — `pnpm check-types`/`pnpm lint` 통과로 대체
+- [x] Step 2.1.5: 도메인 폴더 구조 확정 (web-andrsen + vxt-fashion-admin 비교 후 절충, 2026-07-08 PAAR)
+  - 작업: `src/lib/api/{domain}/{api.ts,api.queries.ts,api.interface.ts}` + `src/lib/api/shared/{request.ts,response.ts,queryKeys.ts}`. `api.exception.ts`는 **지금 빈 파일로 만들지 않음** — Step 2.2/2.3에서 실제 도메인별 예외 처리 필요가 생기면 그때 추가
+  - 검증: 없음(구조 결정, `.claude/rules/{conventions,page}.md` + `CLAUDE.md` 반영 완료로 검증 대체)
+- [x] Step 2.2: 도서 검색 API — **React Query 무한 스크롤**
+  - 작업: `src/lib/api/books/{api.ts,api.queries.ts,api.interface.ts}` — `getBookList()`(query/target/page/size, 카카오 `{ documents, meta }` 그대로 반환), `useBookListInfiniteQuery`(`useInfiniteQuery` + `keepPreviousData`, `meta.is_end` 기반 `getNextPageParam` 종료조건), `src/lib/api/shared/{request.ts,response.ts,queryKeys.ts}`. size는 요구사항대로 **10 고정**(`PAGE_SIZE` 상수, 훅 파라미터에서 `page`/`size` 제외). `select`로 `pages[]`를 `{documents, meta}` 평탄화해서 반환(2026-07-08 확정 — RX-7/RX-12 select 패턴)
+  - **네이밍/구조 web-andrsen 정렬(2026-07-08)**: `searchBooks`→`getBookList`(`get{Domain}List` 패턴), `BookSearchParams`→`BookListParams`, 응답 페이지네이션 메타(`total_count`/`pageable_count`/`is_end`)는 도서 도메인 전용이 아니라 카카오 검색 API 공통 shape이라 `shared/response.ts`의 제네릭 `KakaoSearchResponse<T>`/`KakaoSearchMeta`로 이동(book 전용 `BookSearchResponse` 타입 제거), `bookKeys.search`→`bookKeys.list`, `EMPTY_BOOK_SEARCH`→`EMPTY_BOOK_LIST`. 테스트 폴더도 `__tests__/`(repo 루트) → `src/__tests__/`로 이동(web-andrsen은 테스트를 `src/` 하위에 colocate)
+  - 검증: integration 테스트 — MSW(node)로 `dapi.kakao.com` 스텁(성공/빈결과/target 매핑/400·401·503·500) + `useBookListInfiniteQuery` 훅 테스트(jsdom, renderHook) — **`getNextPageParam` 종료조건 오판 시 무한 요청 루프 방지 케이스**(is_end=true 이후 `fetchNextPage()` 재호출해도 요청 카운트 불변) 통과
+  - **TanStack Virtual 연동 후보(사용자 요청, 2026-07-08)**: 이 Step은 데이터 계층이라 아직 렌더링할 리스트 UI가 없음 — 실제 결과 리스트 컴포넌트를 만드는 **Step 3.2(BookList) 또는 Step 4.2(SearchPage 조립)**에서 `@tanstack/react-virtual` 도입 여부를 PAAR로 재논의(라이브러리 신규 설치라 승인 필요)
+- [x] Step 2.3: ~~찜/검색기록 저장소~~ **Phase 4로 이연(2026-07-08)** — 사용자 판단: Phase 2는 "서버(데이터 계층) 설계" 범위이지 실제 UI 소비 로직까지 미리 만들 단계가 아님. storage 구현은 실제 소비 UI(하트 토글, 검색창)를 만드는 시점(Step 4.2/4.3)에서 그때 필요한 모양대로 설계. 단, 이번 논의에서 합의된 방향은 기록해둠(아래 Step 4.2/4.3 참조):
+  - 저장 레이어 선호 스타일: `src/lib/utils/localStorage.ts`에 범용 `getItem`/`setItem` 래퍼(JSON 파싱 공통화) 먼저 두고, 그 위에 도메인별 모듈(favorites/searchHistory) 조합 — 정확한 형태는 Step 4.2/4.3에서 확정
+  - 찜은 **React Query 미사용** — react-router가 라우트 전환 시 이전 페이지를 언마운트해 동시 마운트 동기화 니즈가 없음. `useState(() => getFavorites())` 기반 훅으로 충분(2곳 이상 라우트가 써서 `lib/` 공유 위치)
+  - 검색기록 중복 처리: 이미 있는 항목이면 **기존 걸 지우고 맨 앞으로 재추가**(최신순 유지, 업계 표준 UX) — 기록 시점은 **명시적 검색 실행(Enter/제출) 1회만**, 실시간 결과 fetch용 debounce와는 무관(디바운스 tick마다 기록 금지)
+- [x] Step 2.4: 게이트 범위 축소(2026-07-08 재검토) — Next.js 시절 "전 도메인 integration 통과" 게이트는 백엔드 없는 axios 단일 계층엔 과함. Step 2.3(찜/검색기록)이 Phase 4로 이연되면서 Phase 2 게이트는 **Step 2.1(http 클라이언트)+ Step 2.2(무한스크롤 쿼리)** 테스트 통과로 완결 — 둘 다 이미 green(unit 0건이나 config는 준비됨, integration 9건 통과)
   - 검증: `pnpm test:unit` 전체 green + Step 2.1/2.2 integration green → /ship 커밋
 
 ### Phase 3: 공용 UI 컴포넌트 (Figma 1:1)
 
 - [ ] Step 3.1: Button(3 variants×4 sizes) / Input(pill+underline) / Select
   - 검증: check-types + 데모 조합 렌더
-- [ ] Step 3.2: Popover(포커스 트랩+Esc+외부클릭) / LikeButton(SVG 하트, aria-pressed) / EmptyState / Skeleton / ResultCount
-  - 검증: LikeButton·Popover RTL 테스트 (키보드 조작)
+- [ ] Step 3.2: Popover(포커스 트랩+Esc+외부클릭) / LikeButton(SVG 하트, aria-pressed) / EmptyState / Skeleton / ResultCount / Toast(recoverable 에러 알림 — `error.response?.status` 기반 분기 소비, 2026-07-08 설계 확정으로 신설. 최초 안이었던 `ApiError.severity`는 Step 2.1에서 과잉설계로 폐기)
+  - 검증: LikeButton·Popover RTL 테스트 (키보드 조작), Toast 자동 dismiss·중첩 큐잉 확인
 - [ ] Step 3.3: Header (GNB, `NavLink` aria-current, 반응형)
   - 검증: /review-ui (토큰 준수·정렬)
   - 결정 필요(Phase 진입 시): 각 컴포넌트의 공용(`src/components/`) vs 페이지 로컬 배치는 **2곳 이상 라우트에서 쓰이는지**로 판단(`page.md` 기준) — 지금 미리 정하지 않고 실제 사용처 확정 후 결정
@@ -126,15 +133,18 @@ sequenceDiagram
 ### Phase 4: 페이지 조립 (react-router)
 
 - [ ] Step 4.1: 라우터 설정 (Step 1.7 조사 반영)
-  - 작업: `src/constants/routes.ts`(경로 상수화, web-andrsen `navigateList` 참고하되 role/guard 제외) + `src/main.tsx`에 `createBrowserRouter`(object 배열 config — `element: <RootLayout />`로 Header/GNB 공유, `children: [{path:"/"}, {path:"/favorites"}, {path:"*", NotFoundPage}]`), `NuqsAdapter`(`nuqs/adapters/react-router/v8`) 연결
+  - 작업: `src/constants/routes.ts`(경로 상수화, web-andrsen `navigateList` 참고하되 role/guard 제외) + `src/main.tsx`에 `createBrowserRouter`(object 배열 config — `element: <RootLayout />`로 Header/GNB 공유, `children: [{path:"/"}, {path:"/favorites"}, {path:"/error", ErrorPage}, {path:"*", NotFoundPage}]`), `NuqsAdapter`(`nuqs/adapters/react-router/v8`) 연결
+  - 작업: `error.response?.status`가 critical(401/403/404/503/기타 5xx) 범위일 때 `/error` 이동 메커니즘 결정 필요(Phase 진입 시 PAAR) — 후보: 페이지별 ErrorBoundary + React Query `throwOnError` vs QueryCache 전역 `onError` + imperative navigate. (Step 2.1에서 폐기한 `ApiError` 클래스 없이, status 값을 이 시점에 직접 판정)
   - 작업(성능 후보, PAAR 후 확정): `/favorites`를 `React.lazy`+`Suspense`로 코드 스플리팅 — 초기 번들에서 찜 페이지 코드 제외, Lighthouse Performance 기여
-  - 검증: 두 라우트 진입 확인 + `path: "*"` 미매치 라우트 NotFound 렌더 확인
+  - 검증: 두 라우트 진입 확인 + `path: "*"` 미매치 라우트 NotFound 렌더 확인 + critical 에러 스텁 발생 시 `/error` 이동 확인
 - [ ] Step 4.2: 도서 검색 페이지 수직 슬라이스
   - 작업: `src/pages/SearchPage/{SearchPage.tsx,hooks/useSearch.ts,components/,styles/}` — SearchBar(기록 8개), DetailSearchPopover(상호배타 로직, `useState` 기반), BookList(무한스크롤 IntersectionObserver), BookListItem(아코디언 단일 열림), nuqs `?q=&target=`
-  - 검증: 브라우저 수동 확인 + RTL 통합(검색→결과→아코디언)
+  - 작업(Step 2.3에서 이연된 검색기록 구현, 2026-07-08 합의): `src/lib/storage/searchHistory.ts` — 검색 **실행**(Enter/제출) 시점에만 기록(실시간 fetch debounce와 별개 이벤트), 중복이면 기존 항목 제거 후 맨 앞 재추가, max 8 FIFO, 빈 문자열 trim 가드
+  - 검증: 브라우저 수동 확인 + RTL 통합(검색→결과→아코디언) + 검색기록 unit 테스트(중복 재정렬, FIFO, 빈 문자열 가드)
 - [ ] Step 4.3: 찜 페이지
   - 작업: `src/pages/FavoritesPage/{FavoritesPage.tsx,hooks/useFavorites.ts}` — BookList 재사용, 클라 페이지네이션(10개), 빈 상태
-  - 검증: 찜 토글 ↔ 목록 동기화 확인
+  - 작업(Step 2.3에서 이연된 찜 구현, 2026-07-08 합의): `src/lib/utils/localStorage.ts`(범용 getItem/setItem) + `src/lib/storage/favorites.ts`(도메인 함수) + `src/lib/storage/useFavorites.ts`(공유 훅, SearchPage 하트 아이콘과 FavoritesPage 둘 다 사용 — **React Query 미사용**, react-router가 라우트 전환 시 이전 페이지를 언마운트하므로 동시 마운트 동기화 니즈 자체가 없음. `useState(() => getFavorites())` 로 충분)
+  - 검증: 찜 토글 ↔ 목록 동기화 확인 + 찜 storage unit 테스트(토글, 브라우저 환경 아닌 곳 no-throw)
 - [ ] Step 4.4: 메타데이터 (SEO 대체 — 결정 필요, Phase 1 요구사항 참조)
   - 작업: PAAR로 확정 후 착수 — `document.title` 동적 갱신(react-router loader 또는 useEffect) 정도로 축소할지, 아예 생략할지
 - [ ] Step 4.5: 반응형 마감
@@ -173,11 +183,11 @@ sequenceDiagram
 | ---------------------------------------------------------------------------------------------- | ---- |
 | `index.html`, `src/{main,App}.tsx`, `src/index.css`, `vite.config.ts` 등 스캐폴딩              | 완료 |
 | `eslint.config.js`, `.prettierrc`, `.prettierignore`, `.husky/*`, `lint-staged.config.js`      | 완료 |
-| `src/lib/api/{client,books,favorites,shared}/*`, `src/lib/storage/*`                           | 신규 |
-| `src/components/{Button,Input,Select,Popover,LikeButton,EmptyState,Skeleton,ResultCount,Header}/*` | 신규 |
+| `src/lib/api/index.ts`, `src/lib/api/{books,favorites}/*`, `src/lib/api/shared/*`, `src/lib/storage/*` | 신규 |
+| `src/components/{Button,Input,Select,Popover,LikeButton,EmptyState,Skeleton,ResultCount,Header,Toast}/*` | 신규 |
 | `src/components/book/{BookList,BookListItem}/*`                                                | 신규 |
-| `src/pages/SearchPage/*`, `src/pages/FavoritesPage/*`                                          | 신규 |
-| `__tests__/{unit,integration}/*`, `e2e/*`, `vitest.*.config.ts`, `playwright.config.ts`        | 신규 |
+| `src/pages/{SearchPage,FavoritesPage,ErrorPage}/*`                                             | 신규 |
+| `src/__tests__/{unit,integration}/*`, `e2e/*`, `vitest.*.config.ts`, `playwright.config.ts`     | 신규 |
 | `.env.example`, `README.md`, `docs/process/*`                                                  | 신규 |
 
 ## 실행 모드
@@ -213,6 +223,8 @@ sequenceDiagram
 - **Husky `"prepare": "husky"` 명시 추가**: vxt-fashion-admin 레퍼런스가 이 스크립트 누락으로 클론 시 훅이 비활성이었던 문제를 보완 [2026-07-08]
 - 커밋lint 제외, conventional commits 수동 준수: 개인 과제 오버헤드 최소화 (husky+lint-staged만)
 - 전역 상태 라이브러리 미도입: RQ+nuqs+localStorage+Context로 충분 — "필요 없음의 근거" 자체를 README에 기술
+- **에러 UX 2분류**(critical→에러 페이지 / recoverable→토스트): 카카오 API 에러 응답의 `code`/`errorType` 세부 분기는 하지 않고 **HTTP status만으로** 판단(백엔드 데이터가 보장하는 건 status뿐). 401/403/404/503/기타 5xx=critical, 400·네트워크에러=recoverable(네트워크 전용 분기 없이 단순 통합). 실응답 바디는 라이브 curl로 `{errorType,message}` 확인(문서의 `{code,msg}` 표와 다름) [U 2026-07-08] → Phase 3 Toast, Phase 4 `/error` 라우트 신설
+- **`src/lib/api/` 폴더 구조 절충**(web-andrsen + vxt-fashion-admin 비교): `client/` 서브폴더 제거(axios 인스턴스는 `index.ts`) — vxt-fashion-admin의 `lib/api/client` vs `app/api`(진짜 Next.js 서버) 대응 구조를 그대로 베꼈던 것인데, 우리는 서버 자체가 없어 대응 대상이 없음. 대신 도메인별 `api.interface.ts` 분리는 채택(기존 "타입은 사용 파일에 인라인" 컨벤션의 명시적 예외) — 공유 타입은 `shared/{request,response}.ts`. `api.exception.ts`는 지금 빈 파일로 안 만들고 실제 필요 생기면 추가 [U 2026-07-08]
 
 ## 발견 사항 / backlog
 

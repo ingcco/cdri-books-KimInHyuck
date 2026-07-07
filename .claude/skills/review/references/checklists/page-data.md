@@ -35,13 +35,13 @@
 
 ### 네이밍
 
-- [ ] [m·Con] 요청 함수: `{동사}{Domain}` (예: `searchBooks`)
-- [ ] [m·Con] 쿼리 훅: `use{Domain}Query` / `use{Domain}InfiniteQuery`
+- [ ] [m·Con] 요청 함수: `get{Domain}List`/`get{Domain}`(단건) 등 web-andrsen 컨벤션 정렬 (예: `getBookList`)
+- [ ] [m·Con] 쿼리 훅: `use{Domain}ListQuery` / `use{Domain}ListInfiniteQuery`
 - [ ] [m·Con] 응답 타입: 카카오 도서 API 응답 shape과 1:1 (`meta`, `documents`)
 
 ### 구조
 
-- [ ] [M·Con] axios 인스턴스 1개(`src/lib/api/client/http.ts`)로 공통 설정(baseURL, `Authorization: KakaoAK` 헤더) 집약 — 중복 생성 금지
+- [ ] [M·Con] axios 인스턴스 1개(`src/lib/api/index.ts`)로 공통 설정(baseURL, `Authorization: KakaoAK` 헤더) 집약 — 중복 생성 금지
 - [ ] [m·Con] query.ts: `UseQueryOptions`/`UseInfiniteQueryOptions`로 확장 가능하게
 - [ ] [M·Cor] `src/lib/api/{domain}/api.ts`는 카카오 응답을 **그대로 반환** — snake_case(`sale_price` 등)를 임의로 camelCase 변환하지 않음(동일 shape 수동 재구성 금지, `conventions.md` "응답 변환 정책" 패턴 A). 파생 값이 필요하면 React Query `select`에서 계산
 - [ ] [m·Con] queryKey 설계: 검색어·target·페이지 등 파라미터를 배열에 포함(`src/lib/api/shared/queryKeys.ts` 팩토리)

@@ -45,7 +45,7 @@
 ## 프로젝트 구조 규약
 
 - `src/` 기준 수직 슬라이스. 페이지: `src/pages/{Name}Page/` = `{Name}Page.tsx`(얇은 조립) + `hooks/useXxx.ts`(페이지 상태 전부) + `components/`(Context 소비만) + `styles/*.style.ts`(tv 슬롯) — 상세: `.claude/rules/page.md`
-- 데이터 3계층: `src/lib/api/client/http.ts`(axios가 `https://dapi.kakao.com`에 `Authorization: KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}` 헤더로 직접 요청) → `src/lib/api/{books,favorites}/api.ts`(순수 요청 함수, 카카오 `{ documents, meta }` 그대로 반환) → `api.queries.ts`(useQuery/useMutation), queryKey는 `src/lib/api/shared/queryKeys.ts` 팩토리 집중
+- 데이터 3계층: `src/lib/api/index.ts`(axios가 `https://dapi.kakao.com`에 `Authorization: KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}` 헤더로 직접 요청, `validateStatus`로 성공(2xx) 판정 — 나머지는 axios가 그대로 reject) → `src/lib/api/{books,favorites}/api.ts`(순수 요청 함수, 카카오 `{ documents, meta }` 그대로 반환) + `api.interface.ts`(도메인 타입) → `api.queries.ts`(useQuery/useMutation), queryKey는 `src/lib/api/shared/queryKeys.ts` 팩토리 집중, 공유 요청/응답 타입은 `src/lib/api/shared/{request,response}.ts`(`FailResponse` = 카카오 게이트웨이 실에러 바디 `{errorType,message}`). 서버(BFF) 없는 CSR 단독 앱이라 "client" 폴더 네이밍은 두지 않음(client/server 대응 개념 자체가 없음) [2026-07-08]. 에러를 critical(에러 페이지)/recoverable(토스트)로 나누는 판단은 http 클라이언트에 두지 않고 **소비 시점(Step 4.1, `error.response?.status` 직접 참조)** 에서 함 — 미리 만든 `ApiError`/severity 분류는 과잉설계로 판단해 폐기
 - 공용 UI는 `src/components/`, 로컬 영속(찜)은 `src/lib/storage`
 
 ## 테스트 정책
