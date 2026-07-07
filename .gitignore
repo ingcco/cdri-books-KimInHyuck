@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# env — 카카오 REST 키 보호 (제출 시 이메일로 별도 공유)
+.env
+.env.*
+!.env.example
+
+# testing
+coverage/
+playwright-report/
+test-results/
+.playwright-tmp/
+
+# misc
+.DS_Store
+*.log
+.vercel
+*.tsbuildinfo
