@@ -1,28 +1,48 @@
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  type QueryKey,
+  type UseInfiniteQueryOptions,
+} from "@tanstack/react-query";
 import { bookKeys } from "../shared/queryKeys";
 import type { Response } from "../shared/response";
 import { getBookList } from "./api";
 import type { BookData, BookListParams } from "./api.interface";
 
-const PAGE_SIZE = 10;
+export const PAGE_SIZE = 10;
 
-export const EMPTY_BOOK_LIST: Response<BookData> = {
+// select가 페이지를 평탄화한 소비용 형태
+export interface BookListResult {
+  documents: BookData[];
+  meta: Response<BookData>["meta"];
+}
+
+export const EMPTY_BOOK_LIST: BookListResult = {
   documents: [],
   meta: { total_count: 0, pageable_count: 0, is_end: true },
 };
 
-export const useBookListInfiniteQuery = (params: Omit<BookListParams, "page" | "size">) => {
-  return useInfiniteQuery({
+type BookListQueryParams = Omit<BookListParams, "page">;
+
+export const useBookListInfiniteQuery = <TData = BookListResult>(
+  params: BookListQueryParams,
+  options?: Omit<
+    UseInfiniteQueryOptions<Response<BookData>, Error, TData, QueryKey, number>,
+    "queryKey" | "queryFn"
+  >
+) =>
+  useInfiniteQuery({
     queryKey: bookKeys.list(params),
-    queryFn: ({ pageParam }) => getBookList({ ...params, page: pageParam, size: PAGE_SIZE }),
+    queryFn: ({ pageParam }) => getBookList({ ...params, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.meta.is_end ? undefined : allPages.length + 1,
-    select: (data) => ({
-      documents: data.pages.flatMap((page) => page.documents),
-      meta: data.pages.at(-1)?.meta ?? EMPTY_BOOK_LIST.meta,
-    }),
+    select: (data) =>
+      ({
+        documents: data.pages.flatMap((page) => page.documents),
+        meta: data.pages.at(-1)?.meta ?? EMPTY_BOOK_LIST.meta,
+      }) as TData,
     placeholderData: keepPreviousData,
     enabled: params.query.trim().length > 0,
+    ...options,
   });
-};

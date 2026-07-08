@@ -24,6 +24,11 @@ export default tseslint.config(
     settings: {
       tailwindcss: { cssConfigPath: "./src/index.css" },
     },
+    rules: {
+      ...tailwindcss.configs.recommended.rules,
+      // 클래스 정렬은 prettier-plugin-tailwindcss가 SOT — eslint 규칙과 중복/충돌이라 off (역할 분리)
+      "tailwindcss/classnames-order": "off",
+    },
   },
   {
     files: ["**/*.{ts,tsx}"],

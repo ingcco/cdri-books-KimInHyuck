@@ -4,7 +4,7 @@ export const buttonVariants = tv({
   slots: {
     base: [
       "relative flex items-center justify-center",
-      "w-fit gap-2 rounded-[8px] transition-colors",
+      "w-fit gap-2 rounded-[8px] whitespace-nowrap transition-colors",
     ],
   },
   variants: {

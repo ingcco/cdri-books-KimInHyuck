@@ -37,6 +37,7 @@
 - 환경: Node 24.13 / pnpm 10.33
 - 카카오 REST 키: 사용자 발급 대기 (MSW 스텁으로 키 없이 개발·테스트 가능)
 - Vercel: 사용자 계정 연결 필요 (배포 Phase에서)
+- **F-13 리팩토링(2026-07-08)**: HomePage 슬라이스 재구성 — `src/hooks`·`src/utils` 신설(`lib/storage`·`lib/utils` 폐기), useHome **4슬롯**(searchBar/history/detailSearch/result), `useSearchInput`(입력 버퍼 Context 격리)·`useOutsideClick`, api.queries **options 오버라이드+keepPreviousData**, localStorage 방어로직 제거, styles 1:1(tv). **잔여: ④가상스크롤[설계논의]·⑤⑥Figma review-ui 검수→구현**
 
 ## 다이어그램
 
