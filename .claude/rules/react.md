@@ -24,6 +24,13 @@ const useFavoriteBooks = (books: Book[], ids: string[]) => {
 };
 ```
 
+## ref는 dedicated 훅이 소유 — Context value에 싣지 말 것
+
+`react-hooks/refs`(React19)는 **render 중 ref 접근**을 에러로 잡는다. ref를 페이지 Context value 객체에 담으면 소비처에서 그 객체(`result.*`)를 render 중 접근하는 것이 전부 플래그된다.
+
+- 외부클릭·무한스크롤·가상화 스크롤 컨테이너 등 ref가 필요한 로직은 **ref를 생성·소유하고 반환하는 dedicated 훅**으로 분리한다(`useOutsideClick`, `useBookListVirtualizer`). 소비 컴포넌트가 그 훅을 호출해 반환된 ref를 JSX `ref={}`에 부착 → Context를 안 탄다.
+- **리셋은 effect 말고 `key`**: React19 `react-hooks/set-state-in-effect`는 effect 안 `setState`를 막는다. "prop 바뀌면 상태 초기화"는 effect가 아니라 **컴포넌트 `key` 교체**로(React 공식 권장). 예: 통합↔상세검색 전환 시 `<SearchField key={filters.target} />`로 입력 버퍼 리셋.
+
 ## Hook 의존성 최소화
 
 - `useEffect`, `useMemo`, `useCallback`의 deps는 **최대 2개**, 가능하면 **1개**
@@ -291,6 +298,14 @@ Hook 분리 원칙:
 - 코드 영역 구분은 `// ====...` 주석 사용
 - 아이콘만 있는 Button (isLoading 포함)에는 반드시 `aria-label` 필수
 
+## 컴포넌트 무상태 원칙 (state는 페이지 훅으로)
+
+페이지 슬라이스에서 **컴포넌트는 무상태**가 기본이다 — `useState`/`useEffect`/핸들러 정의는 페이지 훅(`use{Name}`)에 모으고, 컴포넌트는 `use{Name}Context()`로 **소비만** 한다.
+
+- **유일한 예외 = dedicated 훅**: 특정 UI 관심사를 캡슐화한 재사용 훅(`useSearchInput` 입력 버퍼 격리·`useOutsideClick`·`useBookListVirtualizer`)은 컴포넌트가 직접 호출해도 된다. "페이지 상태를 컴포넌트에 흩뿌리는 것"과 "지역 UI 훅을 쓰는 것"은 다르다.
+- **입력 버퍼는 반드시 지역 훅으로 격리**: controlled input의 draft를 페이지 Context에 올리면 키 입력마다 Context 소비자 전원이 리렌더된다. `useSearchInput`처럼 컴포넌트 지역 훅에 격리(Context 미경유).
+- **Context 슬롯은 소비 UI와 1:1 네이밍**: `use{Name}` 반환 객체의 슬롯명을 컴포넌트 단위로(`searchBar`/`history`/`detailSearch`/`result`) — 소비처가 자기 슬롯만 집어 응집.
+
 ## Page-level Context Provider 패턴
 
 **적용 범위**: 단일 page 안에서 hook 결과(query data + handler)를 자식 컴포넌트(SearchBar/BookList 등)와 공유해야 하는 경우. 페이지 수직 슬라이스(`page.md`)의 핵심.
@@ -469,3 +484,33 @@ const booksQuery = useBookListInfiniteQuery(params);
 // 쿼리 키 팩토리: bookKeys = { all, list(params) } — lib/api/shared/queryKeys.ts
 // EMPTY 상수 + placeholderData: 빈 응답 fallback으로 page에서 ?? 없이 접근
 ```
+
+### 에러 처리 — v5는 per-query onError 없음
+
+React Query v5는 `useQuery`/`useInfiniteQuery`의 `onError`/`onSuccess`/`onSettled`를 **제거**했다. 전역 에러 처리는 `QueryClient`의 `QueryCache({ onError })` 하나뿐.
+
+- **전역 핸들러**(`src/lib/api/queryClient.ts`)는 횡단 관심사만: HTTP status로 critical(401/403/404/503/5xx) 판정 → `/error` 이동. 그 외 → 토스트.
+- **문구는 엔드포인트가 소유**: 토스트 메시지를 전역에 하드코딩하면 새 쿼리도 그 문구에 걸린다. 각 쿼리의 `meta.errorMessage`에 두고 핸들러가 `query.meta?.errorMessage`를 읽어 디스패치(없으면 제네릭).
+
+```typescript
+// api.queries.ts — 문구는 books 쿼리가 소유(엔드포인트 귀속)
+useInfiniteQuery({ /* ... */, meta: { errorMessage: "검색 중 문제가 발생했어요." } });
+
+// src/lib/api/queryClient.ts — 전역은 분류·디스패치만
+new QueryCache({
+  onError: (error, query) => {
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    if (status && (CRITICAL_STATUS.has(status) || status >= 500)) return void router.navigate(ROUTES.error);
+    const msg = query.meta?.errorMessage;
+    toast.error(typeof msg === "string" ? msg : "일시적인 오류가 발생했어요.");
+  },
+});
+```
+
+## 가상 스크롤·앱셸 (긴 목록)
+
+무한 스크롤 결과처럼 DOM이 누적되는 목록은 `@tanstack/react-virtual`로 가상화한다.
+
+- **dedicated 훅**(`useBookListVirtualizer`)이 `scrollRef`를 소유(Context 미경유, 위 "ref는 dedicated 훅이 소유" 참조) + `measureElement`로 동적 높이(아코디언 확장 등) 실측 + 마지막 가상 아이템 도달 시 `fetchNextPage`.
+- **내부 스크롤 앱셸**: window 스크롤 대신 리스트 컨테이너가 스크롤 엘리먼트가 되게 — 루트 `h-dvh flex-col` → 스크롤 영역 `flex-1 min-h-0 overflow-y-auto`. `useWindowVirtualizer`의 `scrollMargin` 복잡도를 피한다.
+- 소량 고정 목록(찜 페이지 등 페이지네이션)은 가상화하지 않는다(오버헤드 > 이득).

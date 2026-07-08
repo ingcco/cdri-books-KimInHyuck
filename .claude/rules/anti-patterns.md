@@ -637,7 +637,7 @@ const useSearch = () => {
 
 **WHY**: React Query는 같은 응답에 대해 동일 reference를 유지(structural sharing). data 자체가 stable이라 다시 `useMemo`로 감싸면 (1) 무의미한 의존성 추적 비용, (2) hook 반환이 query + memo로 혼재되어 `PR-2` 위반, (3) `total_count` 같은 1차 derived는 인라인이 자연스러움. **TS narrowing(`?? EMPTY`) + `placeholderData`** 조합으로 page에서 `?? []` 없이 직접 접근 가능.
 
-**보조 처방**: `src/lib/api/books/api.queries.ts`에 `EMPTY_BOOK_LIST` 상수 + `placeholderData` 명시 → hook은 `?? EMPTY`로 narrowing.
+**보조 처방**: `src/lib/api/books/api.queries.ts`에 `EMPTY_BOOK_LIST` 상수 + `placeholderData: keepPreviousData` → hook은 `?? EMPTY`로 narrowing. `useInfiniteQuery.data`는 타입상 항상 `TData | undefined`라 **함수형 placeholderData로 초기값을 넣어도 소비처 `??`를 못 없앤다** — `keepPreviousData + ?? EMPTY`가 `??` 최소 + 소비 컴포넌트 0개.
 
 **관련**: `RX-2`, `react.md` Handler/Memo 객체
 
@@ -707,6 +707,32 @@ useEffect(() => {
 **판단**: `onSuccess` 콜백이 없는(React Query v5) 환경에서 "데이터 로드 후 1회 기본값 주입"이 필요하면 게이트를 `data.length`로. `reset`(폼 전체 리셋)이 아니라 필드별 `setValue`로 주입.
 
 **관련**: `RX-12`, `react.md` "React Query 컨벤션"
+
+---
+
+### RX-15 ref를 Context value에 담기 / effect에서 setState 리셋 — Major (React19)
+
+```tsx
+// ❌ Before — sentinel/scroll ref를 페이지 Context value에 실음 → 소비처 result.* 전부 react-hooks/refs 플래그
+const result = { data, sentinelRef, /* ... */ };
+// HomePage: {result.hasBooks && ...}  ← "Cannot access refs during render"
+
+// ❌ effect에서 setState로 리셋 → react-hooks/set-state-in-effect
+useEffect(() => { if (detailTarget) setDraft(""); }, [detailTarget]);
+```
+
+```tsx
+// ✅ After — ref는 dedicated 훅이 소유·반환, Context엔 안 실음
+const { scrollRef } = useBookListVirtualizer({ count, hasNextPage, onLoadMore });
+<div ref={scrollRef} />
+
+// ✅ 리셋은 effect 말고 key 교체 (React 공식 권장)
+<SearchField key={filters.target} />  // useSearchInput(filters.target ? "" : filters.q)
+```
+
+**WHY**: (1) React19 `react-hooks/refs`는 render 중 ref 접근을 막는데, ref가 Context value 객체 안에 있으면 그 객체의 **모든 프로퍼티 접근**이 render-time ref 접근으로 플래그된다 — ref는 그것을 쓰는 dedicated 훅이 소유하고 JSX `ref={}`로만 부착. (2) `react-hooks/set-state-in-effect`는 effect 내 `setState`(cascading render)를 막는다 — "prop 바뀌면 리셋"은 `key` 교체가 정석.
+
+**관련**: `react.md` "ref는 dedicated 훅이 소유", `RX-11`(cleanup)
 
 ---
 

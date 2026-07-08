@@ -41,7 +41,7 @@ src/pages/{Name}Page/
 │   └── use{Name}.ts      ← 페이지 상태 전부(query/filter/form/handler) + Context value 생성
 ├── components/           ← Context 소비만 (자체 데이터 훅 금지)
 └── styles/
-    └── {name}.style.ts   ← tv 슬롯 (pageVariants 등)
+    └── {name}.style.ts   ← tv 슬롯 ({name}Variants)
 ```
 
 데이터 계층:
@@ -322,10 +322,14 @@ export function useBookSearchHook() { ... }
 | 상수 객체        | `UPPER_SNAKE_CASE`          | `SORT_LABEL`, `SEARCH_TARGETS`                |
 | Ref              | `{name}Ref`                 | `inputRef`, `contentRef`                      |
 | State            | `[xxx, setXxx]`             | `[isOpen, setIsOpen]`                         |
-| Style 함수       | `{name}Variants`            | `bookCardVariants`, `buttonVariants`          |
-| 페이지 Style     | `pageVariants`              | 모든 `page.style.ts`에서 동일 이름 사용       |
+| Style 함수(컴포넌트·페이지) | `{name}Variants`  | `bookCardVariants`, `buttonVariants`, `homePageVariants` |
+| 페이지 Style 파일 | `{Name}.style.ts`          | `HomePage.style.ts` → `homePageVariants` (컴포넌트와 동일 체계, `pageVariants` 통일 폐기) |
 | Props 인터페이스 | `{Component}Props`          | `BookCardProps`, `ButtonProps`                |
 | Context 타입     | `{Component}ContextValue`   | `SearchContextValue`                          |
+
+## Tailwind 클래스 정렬 — Prettier 단독 SOT
+
+Tailwind 클래스 순서는 **`prettier-plugin-tailwindcss` 하나만** 담당한다. ESLint `tailwindcss/classnames-order`는 **off**(`eslint.config.js`) — 두 도구가 같은 정렬을 겹치면 `--fix`로도 안 잡히는 왕복 충돌이 난다. tv() 슬롯·`className` 문자열 정렬은 포맷 저장(prettier)으로 통일.
 
 ## 코드 품질 원칙
 

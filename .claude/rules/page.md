@@ -1,5 +1,5 @@
 ---
-description: "페이지 패턴 — Vite+React 수직 슬라이스(src/pages/{Name}Page/ = {Name}Page.tsx + hooks/ + components/ + styles/) 표준과 pageVariants tv() 규약."
+description: "페이지 패턴 — Vite+React 수직 슬라이스(src/pages/{Name}Page/ = {Name}Page.tsx + hooks/ + components/ + styles/) 표준과 {name}Variants tv() 스타일 규약."
 paths:
   - "src/pages/**/*Page.tsx"
   - "src/pages/**/styles/*.style.ts"
@@ -32,7 +32,7 @@ src/pages/SearchPage/
 │   ├── BookList.tsx            ← useSearchContext() 소비
 │   └── BookCard.tsx
 └── styles/
-    ├── page.style.ts           ← pageVariants
+    ├── SearchPage.style.ts      ← searchPageVariants
     └── BookCard.style.ts        ← bookCardVariants
 ```
 
@@ -47,37 +47,36 @@ src/lib/api/shared/{request,response}.ts ← 공유 요청/응답 타입
 src/lib/api/shared/queryKeys.ts    ← bookKeys 팩토리
 ```
 
-## pageVariants — `tv()` 규약
+## 페이지 스타일 — `tv()` 규약
 
 | 파일              | 역할                 | 예시                                             |
 | ----------------- | -------------------- | ------------------------------------------------ |
 | `hooks/useXxx.ts` | 비즈니스 로직        | filter, query, handler, state                    |
-| `styles/page.style.ts` | 구조적 레이아웃 (tv) | wrapper, container, header, content, footer      |
+| `styles/{Name}.style.ts` | 구조적 레이아웃 (tv) | wrapper, container, header, content, footer      |
 | `{Name}Page.tsx`  | 조합                 | 컴포넌트 배치, 인라인 세부 스타일               |
 
 규칙:
 
-- tv export명은 모든 `page.style.ts`에서 `pageVariants`로 통일 (경로 자체가 구분)
+- 페이지 스타일 파일은 **`{Name}.style.ts`**(예: `HomePage.style.ts`), export는 컴포넌트와 동일하게 **`{name}Variants`**(예: `homePageVariants`) — 페이지도 컴포넌트와 같은 네이밍 체계(`pageVariants` 단일명 통일 폐기, 파일명이 구분, 2026-07-08 변경)
 - slots에는 **구조적 레이아웃만** (wrapper, container, header, content, footer)
 - 세부 디자인 요소(`<h1>`, `<p>`, 폼 필드 스타일)는 `{Name}Page.tsx`에서 인라인
-- `const styles = pageVariants()`는 컴포넌트 외부에서 호출 (참조 안정성)
+- `const styles = homePageVariants()`는 컴포넌트 외부에서 호출 (참조 안정성)
 - 색상·간격·radius 등은 **`@theme` 시맨틱 토큰**만 사용 (raw Tailwind 색상 금지 — 아래 참조)
 
 ```typescript
-// styles/page.style.ts
+// styles/HomePage.style.ts — 내부 스크롤 앱셸 페이지 예시
 import { tv } from "tailwind-variants";
 
-export const pageVariants = tv({
+export const homePageVariants = tv({
   slots: {
-    wrapper: "flex min-h-dvh flex-col items-center",
-    container: "flex w-full max-w-[960px] flex-col gap-y-6",
-    header: "",
-    content: "flex flex-col gap-y-4",
-    footer: "text-center text-sm text-muted",
+    container: "mx-auto flex size-full min-h-0 max-w-[960px] flex-col gap-6 px-4 py-20",
+    title: "title2 text-text-primary",
+    result: "flex min-h-0 flex-1 flex-col gap-4",
+    scrollArea: "min-h-0 flex-1 overflow-y-auto", // 가상 스크롤 컨테이너 (아래 "가상화·앱셸" 참조)
   },
 });
 
-export type PageVariants = typeof pageVariants;
+export type HomePageVariants = typeof homePageVariants;
 ```
 
 ### 컴포넌트 스타일 분리 (`styles/` 폴더)
@@ -86,7 +85,7 @@ export type PageVariants = typeof pageVariants;
 
 규칙:
 
-- export명: 컴포넌트 스타일은 `{component}Variants`(camelCase, 예: `bookCardVariants`), page는 `pageVariants` 유지
+- export명: 컴포넌트·페이지 모두 `{name}Variants`(camelCase, 예: `bookCardVariants`, `homePageVariants`) — 파일명 `{Name}.style.ts`가 구분
 - **분리 기준**: 인라인 tv가 시각적으로 컴포넌트/page 가독성을 해칠 때만 — 단순 컴포넌트는 인라인 유지(최소 추상화)
 - 한 컴포넌트 내 지역 하위 컴포넌트 variants도 같은 `{Component}.style.ts`에 모은다
 
@@ -128,6 +127,29 @@ export type PageVariants = typeof pageVariants;
 
 - 같은 행의 Input/Dropdown/Button은 **반드시 동일 size** — 혼재 금지
 - 컴포넌트에 size 시스템(sm/md/lg)을 두면 화면 기본은 하나로 통일하고, 인라인 액션(카드 내 아이콘 버튼 등)만 작은 size 허용
+
+## 컴포넌트 분할·배치 기준
+
+### 분할 — "이름값을 하는가" (4신호)
+
+컴포넌트로 뺄지 인라인할지는 아래 4신호 중 **1개 이상** 충족 여부로 판단한다. 없으면 인라인(파일로 빼면 읽는 사람이 정의로 점프 = 시점 이동 비용 > DRY, `anti-patterns.md` CS-5).
+
+1. **재사용** — *지금* 2곳 이상에서 실제 사용 (곧 쓸 것 같음 ❌ = YAGNI)
+2. **자체 상태·행위·계약** — state/effect/ref/handler 소유 또는 a11y 계약(`aria-*`)·이벤트 API 캡슐화
+3. **독립 분기 렌더** — 형제와 *다른 조건*에서만 렌더 (`anti-patterns.md` RX-4)
+4. **부모 가독성 붕괴** — JSX가 커서 인라인하면 부모가 안 읽히는 응집 단위
+
+> **파일 분리 ≠ 컴포넌트 분리**: 한 파일 안에서 2번 쓰이는 조각은 별 파일이 아니라 **같은 파일 지역 컴포넌트**로 둔다(예: `BookListItem` 안의 `BookThumbnail`/`BuyLink`/`LikeButton`).
+
+### 배치 — 공유는 props / 페이지지역은 context 조회
+
+| 위치 | 데이터 주입 |
+| --- | --- |
+| `src/components/` (2곳+ 라우트 공유) | **props** — 특정 페이지 Context를 가정하지 않음 |
+| `src/pages/{Name}Page/components/` (단일 라우트) | **`use{Name}Context()` 직접 조회** — props 최소화 |
+
+- 페이지 지역 컴포넌트는 `book` 같은 map 항목만 prop으로 받고 나머지(핸들러·파생상태)는 Context에서 조회한다.
+- **지역 → 공유 승격 시 반드시 props로 되돌린다**: 공유 컴포넌트가 특정 페이지 Context에 의존하면 다른 라우트에서 못 쓴다(예: `BookListItem`을 찜 페이지와 공유하려면 `useHomeContext` 소비를 props로 환원).
 
 ## 파일 구조 규약
 
