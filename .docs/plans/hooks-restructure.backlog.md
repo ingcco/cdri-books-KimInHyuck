@@ -29,6 +29,9 @@
 | F-15 | (디자인) 검색기록 UI가 Figma와 다름 — Figma는 검색창과 연속된 하나의 박스, 현재는 아래 별도 떠있는 드롭다운 | on | **완료(Figma `Frame 77`/3000:647 실측·구현·스크린샷 검증)**: SearchField 연속 박스(pill 하단 각지게+히스토리 하단 r24 박스, seamless), 히스토리 텍스트 #8D94A0·X 24/16 black, Search에 containerClassName 통과. screens.md SOT 정정. e2e #1/#3 회귀 없음 | ✅ |
 | F-16 | (디자인) 상세검색 팝업도 Figma와 다름 — 사용자 지적: ①검색어 입력 라인 색 ②취소(X) 위치 | on | **완료(실측·구현·스크린샷 검증)**: ① 입력 언더라인 회색→**primary(#4880EE)**(Figma) ② 닫기 X: self-end(인셋24)→**absolute 코너(인셋8)**, size-5→**size-3(12×12)**, #8D94A0→**#B1B8C0** ③ 팝오버 패딩 pt-2/pb-6→**py-9(36, Figma)**. home.spec 팝오버 테스트 회귀 없음. **미세 잔여: 드롭다운 열림이 3옵션(제목 포함) vs Figma 2옵션(선택 제외) — Dropdown 공용 동작이라 보류** | ✅ |
 | F-17 | (디자인, 구현 중 발견) chevron 크기 어긋남 — 상세보기/필터 dropdown | on | **완료**: svg(20×20) 유지, className만 조정 — 필터 size-3→**size-5**(glyph 10×6), 상세보기 size-4→**size-7**(glyph 14×8). Figma 정합. 스크린샷 확인 | ✅ |
+| F-17b | (디자인, F-16 후속) 상세검색 입력 언더라인이 포커스 안 해도 파랑 + 제목/입력 라인 안 맞음 | on | **완료**: 언더라인 항상 primary→**기본 회색·포커스 시 primary**(Figma 파랑은 활성 상태였음). 제목(37)/입력(21) 높이 불일치 → 입력 `h-9`(36)로 정렬. 드롭다운 열림 3옵션은 표준 select로 유지(사용자 확정) | ✅ |
+| F-18 | (동작) 검색어 입력 후 **로고 클릭 시 입력 안 지워짐** + "key 안 쓰고 안 되냐" | on | **완료(key 없이)**: `SearchField`의 `key={filters.target}` 제거 → `useSearchInput`에서 이전 값 `useState` 비교로 렌더 중 `draft` 동기화(로고·뒤로가기·검색·상세전환 통합). ref는 `react-hooks/refs`에 걸려 `useState`. e2e #5 추가, react.md/anti-patterns 갱신 | ✅ |
+| F-19 | (제출 청소) index.html Vite 기본 잔재 + favicon + 미사용 파일 | on | **완료**: index.html `lang=ko`·title·description·`favicon.ico`(vite-tmp 제거) / 미사용 에셋 4개(favicon.svg·icons.svg·react.svg·vite.svg) 삭제 / `.env.example` 삭제 → CLAUDE.md 보안 불변식 갱신 | ✅ |
 | F-14 | (디자인) 검색창 X가 파란색 다른 모양 — close.svg여야 | on | 원인 = `type="search"` 네이티브 `::-webkit-search-cancel-button`. **확정: 커스텀**. `Search.style`에 `[&::-webkit-search-cancel-button]:hidden` + SearchField가 값 있을 때 close.svg(#B1B8C0) suffix 버튼(클릭→clear+focus). Phase 7. (ship 스모크) | ✅ |
 
 ## ⏳ 별도 plan 후보 (off-topic — ship 시 분리 검토)
@@ -39,6 +42,7 @@
 
 ## 💡 컨벤션 개선 후보
 
-- **훅 배치 2단계 판정 명문화** (F-8/F-9로 진화): ① 제네릭 메커니즘(도메인 무지, 아무 앱 복붙 가능) → `src/hooks/`. ② 도메인 훅 → 소유자로: 단일 라우트=페이지 슬라이스 `hooks/`, 진짜 라우트간 공유=도메인 모듈(`src/lib/{domain}/`). **localStorage 사용은 공통 근거 아님**(구현 디테일). `react.md`(306) + `CLAUDE.md`(49) 갱신. /review에서 확정.
-- **찜=서버 없는 로컬 도메인 → books와 동형 분리**: 순수 도메인 파일 + 상태 훅. `src/lib/api/books`(원격) ↔ `src/lib/favorites`(로컬)의 대칭을 룰로 승격할지 검토.
-- **react-virtual 스크롤 리셋 gotcha (F-12)**: 데이터 리셋(새 검색) 시 스크롤 top 초기화는 `scrollTo(0)`/`scrollToOffset(0)` 명령형이 아니라 **리스트 컴포넌트 `key` 재마운트**로 해야 함. 이유: 결과 섹션이 언마운트/리마운트되면 persistent virtualizer가 이전 offset을 새 엘리먼트에 복원. → `react.md` "가상 스크롤·앱셸" 절에 1줄 추가 검토.
+- 📤 **훅 배치 2단계 판정 명문화** (F-8/F-9) — **반영 완료**: `react.md`(305~307) + `CLAUDE.md`(49). ① 제네릭 메커니즘 → `src/hooks/` / ② 도메인 훅 → 소유자(단일=페이지 슬라이스, 공유=`src/lib/{domain}/`). localStorage는 공통 근거 아님.
+- **찜=서버 없는 로컬 도메인 → books와 동형 분리**: 순수 도메인 파일 + 상태 훅. `src/lib/api/books`(원격) ↔ `src/lib/favorites`(로컬)의 대칭. (후보 유지 — 별도 룰 승격은 선택)
+- 📤 **react-virtual 스크롤 리셋 = `key` 재마운트** (F-12) — **반영 완료**: `react.md` "가상 스크롤·앱셸" 절. 명령형 `scrollTo(0)`/`scrollToOffset(0)`은 persistent virtualizer의 offset 복원으로 실패 → 리스트 `key` 재마운트.
+- 📤 **prop 바뀌면 상태 리셋 = `key` 또는 render-time `useState`(ref ❌)** (F-18) — **반영 완료**: `react.md`(32) + `anti-patterns.md`(RX-15). SearchField는 이 패턴으로 **key 제거**(로고·뒤로가기·검색 실행 시 입력 초기화). ref로 이전 값 저장은 `react-hooks/refs`에 걸리니 반드시 `useState`.
