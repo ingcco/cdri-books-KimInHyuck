@@ -16,7 +16,7 @@ export const buttonVariants = tv({
       gray: { base: "bg-light-gray text-text-secondary enabled:hover:bg-gray" },
     },
     size: {
-      sm: { base: "h-[35px] px-3 body2" },
+      sm: { base: "h-[35px] px-2.5 body2" },
       md: { base: "h-[48px] px-5 caption" },
       full: { base: "h-[36px] w-full body2" },
     },

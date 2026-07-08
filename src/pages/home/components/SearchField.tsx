@@ -1,7 +1,10 @@
+import { AnimatePresence, m } from "framer-motion";
 import { useHomeContext } from "../hooks/useHome";
 import { searchFieldVariants } from "../styles/SearchField.style";
+import CloseIcon from "@/assets/icons/close.svg";
 import Search from "@/components/input/search/Search";
 import { useSearchInput } from "@/hooks/useSearchInput";
+import { animation } from "@/lib/animation/transition";
 
 const styles = searchFieldVariants();
 
@@ -17,7 +20,7 @@ const SearchHistoryList = ({
   onRemove: (query: string) => void;
 }) => {
   return (
-    <ul className={styles.historyList()}>
+    <m.ul {...animation.dropdown} className={styles.historyList()}>
       {list.map((item, index) => (
         <li
           key={item}
@@ -41,11 +44,11 @@ const SearchHistoryList = ({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onRemove(item)}
           >
-            ✕
+            <CloseIcon aria-hidden="true" className="size-4" />
           </button>
         </li>
       ))}
-    </ul>
+    </m.ul>
   );
 };
 
@@ -97,14 +100,16 @@ const SearchField = () => {
           setActiveIndex(-1);
         }}
       />
-      {isHistoryOpen && (
-        <SearchHistoryList
-          list={history.list}
-          activeIndex={activeIndex}
-          onSelect={selectHistory}
-          onRemove={history.remove}
-        />
-      )}
+      <AnimatePresence>
+        {isHistoryOpen && (
+          <SearchHistoryList
+            list={history.list}
+            activeIndex={activeIndex}
+            onSelect={selectHistory}
+            onRemove={history.remove}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

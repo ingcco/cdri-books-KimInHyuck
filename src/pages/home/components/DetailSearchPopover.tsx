@@ -1,10 +1,13 @@
+import { m } from "framer-motion";
 import { useHomeContext } from "../hooks/useHome";
 import { detailSearchPopoverVariants } from "../styles/DetailSearchPopover.style";
+import CloseIcon from "@/assets/icons/close.svg";
 import Button from "@/components/button/Button";
 import Dropdown from "@/components/dropdown/Dropdown";
 import Input from "@/components/input/Input";
 import { dropdownList } from "@/constants/dropdownList";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
+import { animation } from "@/lib/animation/transition";
 
 const styles = detailSearchPopoverVariants();
 
@@ -15,14 +18,20 @@ const DetailSearchPopover = () => {
   if (!detailSearch.isOpen) return null;
 
   return (
-    <div ref={ref} role="dialog" aria-label="상세 검색" className={styles.popover()}>
+    <m.div
+      ref={ref}
+      {...animation.dropdown}
+      role="dialog"
+      aria-label="상세 검색"
+      className={styles.popover()}
+    >
       <button
         type="button"
         aria-label="상세 검색 닫기"
         className={styles.close()}
         onClick={detailSearch.close}
       >
-        ✕
+        <CloseIcon aria-hidden="true" className="size-5" />
       </button>
       <div className={styles.row()}>
         <Dropdown
@@ -44,7 +53,7 @@ const DetailSearchPopover = () => {
       <Button buttonType="primary" size="full" onClick={detailSearch.submit}>
         검색하기
       </Button>
-    </div>
+    </m.div>
   );
 };
 

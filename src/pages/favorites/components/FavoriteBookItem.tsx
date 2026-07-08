@@ -1,11 +1,11 @@
 import { m } from "framer-motion";
-import { useHomeContext } from "../hooks/useHome";
+import { useFavoritesPageContext } from "../hooks/useFavoritesPage";
 import ChevronIcon from "@/assets/icons/chevron-down.svg";
 import LikeFillIcon from "@/assets/icons/like-fill.svg";
 import LikeLineIcon from "@/assets/icons/like-line.svg";
 import Button from "@/components/button/Button";
 import { useCollapse } from "@/hooks/useCollapse";
-import type { BookData } from "@/lib/api/books/api.interface";
+import type { FavoriteBook } from "@/hooks/useFavorites";
 import { toComma } from "@/utils/number";
 
 // 하트 토글 — 아이콘 전용 버튼(Button chrome 불필요), 찜 상태 a11y 계약 캡슐화
@@ -27,7 +27,7 @@ const LikeButton = ({
       type="button"
       aria-pressed={isFavorite}
       aria-label={isFavorite ? "찜 해제" : "찜하기"}
-      className={`focus-visible:outline-primary flex cursor-pointer items-center justify-center rounded-full focus-visible:outline-2 ${className ?? ""}`}
+      className={`focus-visible:outline-primary flex items-center justify-center rounded-full focus-visible:outline-2 ${className ?? ""}`}
       onClick={onToggle}
     >
       <Icon aria-hidden="true" className={size === "sm" ? "size-4" : "size-6"} />
@@ -42,7 +42,7 @@ const BookThumbnail = ({
   isFavorite,
   onToggleFavorite,
 }: {
-  book: BookData;
+  book: FavoriteBook;
   variant: "collapsed" | "expanded";
   isFavorite: boolean;
   onToggleFavorite: () => void;
@@ -89,8 +89,10 @@ const DetailToggle = ({
   </Button>
 );
 
-const BookListItem = ({ book }: { book: BookData }) => {
-  const { result } = useHomeContext();
+// 찜 지역 도서 아이템 — 홈 BookListItem과 시각적으로 유사하나 찜 도메인에 독립(의도적 중복).
+// FavoriteBook 스냅샷을 소비하고, 상태/핸들러는 찜 페이지 Context에서 조회한다.
+const FavoriteBookItem = ({ book }: { book: FavoriteBook }) => {
+  const { result } = useFavoritesPageContext();
 
   const isOpen = result.openIsbn === book.isbn;
   const { showDetail, onAnimationComplete } = useCollapse(isOpen);
@@ -187,4 +189,4 @@ const BookListItem = ({ book }: { book: BookData }) => {
   );
 };
 
-export default BookListItem;
+export default FavoriteBookItem;
