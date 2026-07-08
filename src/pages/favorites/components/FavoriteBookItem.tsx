@@ -5,8 +5,9 @@ import LikeFillIcon from "@/assets/icons/like-fill.svg";
 import LikeLineIcon from "@/assets/icons/like-line.svg";
 import Button from "@/components/button/Button";
 import { useCollapse } from "@/hooks/useCollapse";
-import type { FavoriteBook } from "@/hooks/useFavorites";
+import type { FavoriteBook } from "@/lib/favorites/favorites";
 import { toComma } from "@/utils/number";
+import { resolveBookPrice } from "@/utils/price";
 
 // 하트 토글 — 아이콘 전용 버튼(Button chrome 불필요), 찜 상태 a11y 계약 캡슐화
 const LikeButton = ({
@@ -85,7 +86,7 @@ const DetailToggle = ({
 }) => (
   <Button buttonType="gray" size="md" className={`gap-1 ${className ?? ""}`} onClick={onToggleOpen}>
     상세보기
-    <ChevronIcon aria-hidden="true" className={`size-4 ${isOpen ? "rotate-180" : ""}`} />
+    <ChevronIcon aria-hidden="true" className={`size-7 ${isOpen ? "rotate-180" : ""}`} />
   </Button>
 );
 
@@ -98,8 +99,7 @@ const FavoriteBookItem = ({ book }: { book: FavoriteBook }) => {
   const { showDetail, onAnimationComplete } = useCollapse(isOpen);
   const isFavorite = result.favorite.isFavorite(book.isbn);
   const authors = book.authors.join(", ");
-  const hasSale = book.sale_price >= 0;
-  const finalPrice = hasSale ? book.sale_price : book.price;
+  const { hasSale, finalPrice } = resolveBookPrice(book);
 
   return (
     <m.div

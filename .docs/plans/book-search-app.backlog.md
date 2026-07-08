@@ -32,6 +32,7 @@
 | F-15 | "내가 찜한 책 화면 만들자 — home 슬라이스 참고, 구현계획 체크 후 구현". Phase0 결정: 찜 페이지네이션 = **자동 무한 스크롤**(10개씩 append, IntersectionObserver, 가상화 없음 — 소량 로컬) (2026-07-08) | on | 현재 plan Step 4.3 구체화(4.3a~d) | ✅ |
 | F-16 | **BookListItem/EmptyState 공유 승격 반대** — "승격 안 함. 별도로 만들어 진행. 3곳 이상 안 겹치니 재사용 안 한다고 (README에) 밝힐 것. 찜은 도메인/데이터가 다르니(찜 목록 API·인터페이스) 재사용 컴포넌트가 맞지 않다." (2026-07-08) | on | Step 4.3 승격안(구 4.3a/b) 폐기 → 홈 무수정, 찜 지역 `FavoriteBookItem`+자체 빈상태(자기 Context 소비). 근거=3곳 룰(2<3)+CP-1+도메인 분리. 핸드오프 메모리 "승격" 지침 override. 파생 질문: 찜 타입 (a)BookData 재사용 vs (b)FavoriteBook 신설 | ✅ 타입=(b) `FavoriteBook` 신설 확정(스냅샷 DTO, useFavorites co-locate, `toFavoriteBook` 매핑) |
 | F-17 | 구현 중 2건 정정 지시: ① "로컬스토리지로 하는거 맞아?"(저장 방식 재확인) ② "왜 인피니트 스크롤? 버추얼 스크롤 써야하는거 아냐? home 체크한거 맞아?" — 찜도 홈처럼 가상화하라는 지적 (2026-07-08) | on | ① **A(localStorage 스냅샷) 확정** — 카카오 찜/상세조회 API 없음 문서검증(`/v3/search/book` 단일, 배치·단건조회 불가, isbn 10+13 공백결합), 백엔드 없는 CSR + [F]스펙. ② **F-15 '가상화 없음' 정정** — 무한스크롤(로드방식)과 비가상화(렌더방식) 혼동이었음 → 홈 `useBookListVirtualizer` 재사용으로 전환, `useInfiniteScroll` 폐기. react.md '찜 가상화 금지' 룰도 정정(📤 적용됨) | ✅ |
+| F-18 | `src/hooks` 재편 피드백: `useBookListVirtualizer`→범용 네이밍, `useSearchInput` 위치·형태 정리, `useFavorites`/`useSearchHistory` 배치 근거 확인 (2026-07-09) | on(별개 리팩토링) | 사용자 "새로운 플래닝" 명시 → 즉시 분리: **`.docs/plans/hooks-restructure.md`**(+backlog F-1~6). 훅 레이어 정리(리네임+이동+원칙 명문화) | 🔀 분리됨 |
 
 ## ⏳ 별도 plan 후보 (off-topic — ship 시 분리 검토)
 
@@ -59,8 +60,9 @@
 ## ⏳ 미결 (별도 plan/시점)
 
 - 카카오 REST 키 발급 (사용자 액션 — Phase 2 실 스모크 전까지)
-- Vercel 계정 연결 (사용자 액션 — Phase 5.3 전까지)
 - Figma PAT 7일 유효 (2026-07-14경 만료) — 만료 전 디자인 재실측 필요분 완료할 것
+
+> Vercel 배포 미채택(2026-07-09) — 클라이언트 키 실노출/쿼터 남용 리스크 + 과제 필수 아님. 로컬 실행법·Lighthouse 지표를 README에 기록하는 것으로 대체.
 
 ## 참고 문서 영향 (.docs/design·spec 갱신 후보)
 

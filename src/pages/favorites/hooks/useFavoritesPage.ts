@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useState } from "react";
-import { useFavorites } from "@/hooks/useFavorites";
+import { useFavorites } from "@/lib/favorites/useFavorites";
 
 const FAVORITES_PAGE_SIZE = 10;
 
@@ -27,7 +27,7 @@ const useFavoritesPage = () => {
     totalCount: favorites.length,
     isEmpty: favorites.length === 0,
     hasMore: visibleCount < favorites.length,
-    // useBookListVirtualizer effect deps 안정화를 위해 useCallback (react.md 허용 조건)
+    // useVirtualScroll effect deps 안정화를 위해 useCallback (react.md 허용 조건)
     loadMore: useCallback(() => setVisibleCount((count) => count + FAVORITES_PAGE_SIZE), []),
     openIsbn,
     toggleOpen: (isbn: string) => setOpenIsbn((cur) => (cur === isbn ? null : isbn)),

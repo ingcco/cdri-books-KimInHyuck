@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
-import { useBookListInfiniteQuery } from "../../../lib/api/books/api.queries";
-import { server } from "../msw/server";
+import { useBookListInfiniteQuery } from "./api.queries";
+import { server } from "@/test/msw-server";
 
 const BOOK_SEARCH_URL = "https://dapi.kakao.com/v3/search/book";
 

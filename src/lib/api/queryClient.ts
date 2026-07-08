@@ -1,19 +1,15 @@
 import { QueryCache, QueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { ROUTES } from "@/constants/routes";
+import { classifyQueryError } from "@/lib/api/shared/classifyQueryError";
 import { toast } from "@/providers/toast/toastStore";
 import { router } from "@/router";
-
-// HTTP status로만 critical/recoverable 판정 — 소비 시점 분류.
-const CRITICAL_STATUS = new Set([401, 403, 404, 503]);
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     // 전역은 "critical → 에러 페이지 이동"(횡단 관심사)만 담당한다.
     // recoverable 토스트 문구는 각 쿼리가 meta.errorMessage로 소유(엔드포인트 귀속).
     onError: (error, query) => {
-      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-      if (status !== undefined && (CRITICAL_STATUS.has(status) || status >= 500)) {
+      if (classifyQueryError(error) === "critical") {
         void router.navigate(ROUTES.error);
         return;
       }

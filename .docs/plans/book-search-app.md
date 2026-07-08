@@ -4,7 +4,7 @@
 
 ## 목표
 
-카카오 책 검색 API 기반 도서 검색·찜 서비스를 Figma 명세와 1:1로 구현하고, 테스트·배포·문서화까지 3일 내 제출 가능한 완성도로 만든다.
+카카오 책 검색 API 기반 도서 검색·찜 서비스를 Figma 명세와 1:1로 구현하고, 테스트·문서화까지 3일 내 제출 가능한 완성도로 만든다.
 
 ## 배경 (3 Whys)
 
@@ -36,7 +36,6 @@
 - git: main 브랜치, 커밋 2개(하네스, 설계문서) + 이번 세션 스캐폴딩/툴링 작업 미커밋
 - 환경: Node 24.13 / pnpm 10.33
 - 카카오 REST 키: 사용자 발급 대기 (MSW 스텁으로 키 없이 개발·테스트 가능)
-- Vercel: 사용자 계정 연결 필요 (배포 Phase에서)
 - **F-13 리팩토링(2026-07-08)**: HomePage 슬라이스 재구성 — `src/hooks`·`src/utils` 신설(`lib/storage`·`lib/utils` 폐기), useHome **4슬롯**(searchBar/history/detailSearch/result), `useSearchInput`(입력 버퍼 Context 격리)·`useOutsideClick`, api.queries **options 오버라이드+keepPreviousData**, localStorage 방어로직 제거, styles 1:1(tv). **잔여: ④가상스크롤[설계논의]·⑤⑥Figma review-ui 검수→구현**
 
 ## 다이어그램
@@ -46,7 +45,7 @@ flowchart LR
     P1[Phase 1<br/>스캐폴딩+툴링+토큰] --> P2[Phase 2<br/>데이터 계층]
     P2 -->|integration 테스트 통과 게이트| P3[Phase 3<br/>공용 UI 컴포넌트]
     P3 --> P4[Phase 4<br/>페이지 조립]
-    P4 --> P5[Phase 5<br/>e2e+배포+문서화]
+    P4 --> P5[Phase 5<br/>e2e+문서화]
     P1 -.->|/ship 커밋| G[(git)]
     P2 -.->|/ship| G
     P3 -.->|/ship| G
@@ -161,19 +160,16 @@ sequenceDiagram
   - 작업: 리스트 아이템 모바일 세로 적층, Header/SearchBar 축소, 아코디언 모바일 레이아웃
   - 검증: /review-ui 뷰포트 3종(375/768/1280) + Lighthouse(P≥90, A11y≥90 목표)
 
-### Phase 5: e2e + 배포 + 문서화
+### Phase 5: e2e + 문서화
 
 - [ ] Step 5.1: Playwright e2e
   - 작업: 핵심 여정 — 검색→무한스크롤→아코디언→찜→/favorites 확인→찜 해제→기록 확인. 카카오 API는 route interception 스텁 + (키 있으면) 실 API 스모크 1건
   - 검증: `pnpm test:e2e` green
 - [ ] Step 5.2: 성능 패스
   - 작업: `<img loading="lazy">`(썸네일 — `next/image` 대체, Vite엔 내장 이미지 최적화 없음), 번들 분석, RQ staleTime 정책
-  - 검증: Lighthouse Performance ≥ 90
-- [ ] Step 5.3: Vercel 배포 (사용자: 계정 연결 + env 등록)
-  - 작업: Vite 정적 빌드 output. react-router 클라이언트 라우팅이므로 SPA fallback rewrite(`vercel.json` 또는 대시보드 설정) 필요 여부 확인
-  - 검증: 프로덕션 URL 스모크(`/favorites` 새로고침 시 404 아님 확인) + 배포 환경에서 키 미노출 재확인(빌드 산출물 grep)
-- [ ] Step 5.4: README.md + 과정 문서(readme.html)
-  - 작업: README(개요/실행/폴더구조/**라이브러리 선택 이유(PAAR 근거 포함)**/강조 기능/BFF 미도입 트레이드오프) + 과정 문서(planning→구현→리뷰→ship 흐름, 훅·규칙 동작 증거, 셋팅 과정 제외) + html 렌더
+  - 검증: `pnpm build && pnpm preview`(프로덕션 빌드 로컬 서빙)에 Lighthouse Performance ≥ 90 — 측정 점수는 README 성능 지표 섹션에 기록
+- [ ] Step 5.3: README.md + 과정 문서(readme.html)
+  - 작업: README(개요/실행/폴더구조/**라이브러리 선택 이유(PAAR 근거 포함)**/강조 기능/**성능 지표(Lighthouse Performance·Accessibility 점수, `pnpm build && pnpm preview` 기준)**/BFF 미도입·배포 미채택 트레이드오프) + 과정 문서(planning→구현→리뷰→ship 흐름, 훅·규칙 동작 증거, 셋팅 과정 제외) + html 렌더
   - 작업(F-1): **면접관 관점 "AI 협업 방식" 섹션** — .claude 하네스가 무엇인지(위험 차단·컨벤션 강제·리뷰 게이트 = 품질 통제 장치), 모든 코드가 계획·리뷰·테스트 게이트를 거쳐 작성자 이해가 보장되는 프로세스임을 전문용어 최소화로 설명
   - 검증: 신규 클론 → `pnpm i && pnpm dev` 재현 테스트
 
@@ -206,14 +202,13 @@ sequenceDiagram
 
 ## 실패 위험 (Pre-mortem)
 
-- [ ] 카카오 키 미발급 상태 장기화 → MSW로 개발 지속 가능하나 실 스모크·배포 검증 지연 (사용자 액션 필요)
+- [ ] 카카오 키 미발급 상태 장기화 → MSW로 개발 지속 가능하나 실 스모크 검증 지연 (사용자 액션 필요)
 - [ ] 카카오 썸네일 이미지 깨짐 — `next/image` 도메인 화이트리스트가 없으므로 해당 이슈 자체가 없음(일반 `<img>`), 빈 thumbnail("" 값) fallback UI만 필요
 - [ ] localStorage 접근 시점 — CSR이라 SSR/hydration mismatch 이슈 자체가 없음(Next.js 특유 문제 소멸). 다만 초기 렌더 시 값 없음 → 값 있음 깜빡임은 skeleton으로 방지
 - [ ] Tailwind v4 `@theme` + tv() 조합 클래스 미인식 → 토큰 유틸은 `index.css` 정의라 safe, 데모 페이지로 Phase 1에서 조기 검증
 - [ ] 무한스크롤 + 아코디언 열림 상태 유지 → 페이지 append 방식(가상화 미사용)이라 상태 보존, e2e로 회귀 방지
 - [ ] Playwright e2e가 실 카카오 호출 → route interception으로 차단, CI 없는 로컬 실행 기준
 - [ ] `eslint-plugin-react`가 ESLint 10 미지원(OPEN 이슈) → `eslint`를 latest로 올리면 재발. 9.39.1 고정 유지, [[project-cdri-eslint10-compat-gotcha]] 참조
-- [ ] Vercel 배포 시 react-router 클라이언트 라우트 새로고침 404 → SPA fallback rewrite 설정 필요(Step 5.3에서 확인)
 
 ## 결정 사항
 

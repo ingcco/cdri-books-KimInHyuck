@@ -6,14 +6,14 @@ import {
 } from "./hooks/useFavoritesPage";
 import { favoritesPageVariants } from "./styles/FavoritesPage.style";
 import emptyImage from "@/assets/images/image_empty.png";
-import { useBookListVirtualizer } from "@/hooks/useBookListVirtualizer";
+import { useVirtualScroll } from "@/hooks/useVirtualScroll";
 import { toComma } from "@/utils/number";
 
 const styles = favoritesPageVariants();
 
 const FavoritesPageContent = () => {
   const { result } = useFavoritesPageContext();
-  const { scrollRef, virtualizer, virtualItems } = useBookListVirtualizer({
+  const { scrollRef, virtualizer, virtualItems } = useVirtualScroll({
     count: result.books.length,
     hasNextPage: result.hasMore,
     onLoadMore: result.loadMore,

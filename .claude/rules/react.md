@@ -28,8 +28,8 @@ const useFavoriteBooks = (books: Book[], ids: string[]) => {
 
 `react-hooks/refs`(React19)는 **render 중 ref 접근**을 에러로 잡는다. ref를 페이지 Context value 객체에 담으면 소비처에서 그 객체(`result.*`)를 render 중 접근하는 것이 전부 플래그된다.
 
-- 외부클릭·무한스크롤·가상화 스크롤 컨테이너 등 ref가 필요한 로직은 **ref를 생성·소유하고 반환하는 dedicated 훅**으로 분리한다(`useOutsideClick`, `useBookListVirtualizer`). 소비 컴포넌트가 그 훅을 호출해 반환된 ref를 JSX `ref={}`에 부착 → Context를 안 탄다.
-- **리셋은 effect 말고 `key`**: React19 `react-hooks/set-state-in-effect`는 effect 안 `setState`를 막는다. "prop 바뀌면 상태 초기화"는 effect가 아니라 **컴포넌트 `key` 교체**로(React 공식 권장). 예: 통합↔상세검색 전환 시 `<SearchField key={filters.target} />`로 입력 버퍼 리셋.
+- 외부클릭·무한스크롤·가상화 스크롤 컨테이너 등 ref가 필요한 로직은 **ref를 생성·소유하고 반환하는 dedicated 훅**으로 분리한다(`useOutsideClick`, `useVirtualScroll`). 소비 컴포넌트가 그 훅을 호출해 반환된 ref를 JSX `ref={}`에 부착 → Context를 안 탄다.
+- **리셋은 effect 말고 — `key` 또는 렌더 중 `useState` 비교**: React19는 effect 내 `setState`(`set-state-in-effect`)도, 렌더 중 ref 접근(`react-hooks/refs`)도 막는다. "prop 바뀌면 상태 리셋"은 두 가지 — (a) 컴포넌트 **`key` 교체**(전체 리셋·가상화 재생성 등 큰 단위), (b) **이전 값을 `useState`로 들고 렌더 중 비교**해 조정하는 React 공식 패턴(일부 state 동기화 — 이전 값을 ref로 저장하면 lint에 걸리니 반드시 `useState`). 예: `useSearchInput`이 (b)로 URL 검색어(로고·뒤로가기·검색 실행)에 입력 버퍼를 동기화한다(key 없이). `const [prev,setPrev]=useState(initialValue); if(prev!==initialValue){setPrev(initialValue); setDraft(initialValue);}`
 
 ## Hook 의존성 최소화
 
@@ -302,7 +302,11 @@ Hook 분리 원칙:
 
 페이지 슬라이스에서 **컴포넌트는 무상태**가 기본이다 — `useState`/`useEffect`/핸들러 정의는 페이지 훅(`use{Name}`)에 모으고, 컴포넌트는 `use{Name}Context()`로 **소비만** 한다.
 
-- **유일한 예외 = dedicated 훅**: 특정 UI 관심사를 캡슐화한 재사용 훅(`useSearchInput` 입력 버퍼 격리·`useOutsideClick`·`useBookListVirtualizer`)은 컴포넌트가 직접 호출해도 된다. "페이지 상태를 컴포넌트에 흩뿌리는 것"과 "지역 UI 훅을 쓰는 것"은 다르다.
+- **유일한 예외 = dedicated 훅**: 특정 UI 관심사를 캡슐화한 훅(`useSearchInput` 입력 버퍼 격리·`useOutsideClick`·`useVirtualScroll`·`useCollapse`)은 컴포넌트가 직접 호출해도 된다. "페이지 상태를 컴포넌트에 흩뿌리는 것"과 "지역 UI 훅을 쓰는 것"은 다르다.
+  - **훅 배치 = 2단계 판정 (사용처 수 아님)**:
+    - ① **제네릭 메커니즘인가?**(도메인 무지 — 아무 앱에 복붙해도 됨) → `src/hooks/`. 사용처 1곳이어도 여기. 예: `useOutsideClick`·`useVirtualScroll`·`useCollapse`.
+    - ② **도메인 훅이면 소유자로**: 단일 라우트 → 그 페이지 슬라이스 `hooks/`(예: `useSearchInput`·`useSearchHistory` = home 전용). 진짜 라우트간 공유 → 도메인 모듈 `src/lib/{domain}/`(예: `useFavorites` = 홈+찜 공유 → `src/lib/favorites/`, 순수 `favorites.ts`(도메인 규칙) + 상태 훅 `useFavorites.ts`로 분리해 `lib/api/books`의 `api.ts`+`api.queries.ts`와 동형).
+    - **localStorage 사용은 공통 근거가 아니다** — 구현 디테일일 뿐. 도메인 소유권이 배치를 정한다.
 - **입력 버퍼는 반드시 지역 훅으로 격리**: controlled input의 draft를 페이지 Context에 올리면 키 입력마다 Context 소비자 전원이 리렌더된다. `useSearchInput`처럼 컴포넌트 지역 훅에 격리(Context 미경유).
 - **Context 슬롯은 소비 UI와 1:1 네이밍**: `use{Name}` 반환 객체의 슬롯명을 컴포넌트 단위로(`searchBar`/`history`/`detailSearch`/`result`) — 소비처가 자기 슬롯만 집어 응집.
 
@@ -511,6 +515,6 @@ new QueryCache({
 
 무한 스크롤 결과처럼 DOM이 누적되는 목록은 `@tanstack/react-virtual`로 가상화한다.
 
-- **dedicated 훅**(`useBookListVirtualizer`)이 `scrollRef`를 소유(Context 미경유, 위 "ref는 dedicated 훅이 소유" 참조) + `measureElement`로 동적 높이(아코디언 확장 등) 실측 + 마지막 가상 아이템 도달 시 `fetchNextPage`.
+- **dedicated 훅**(`useVirtualScroll`)이 `scrollRef`를 소유(Context 미경유, 위 "ref는 dedicated 훅이 소유" 참조) + `measureElement`로 동적 높이(아코디언 확장 등) 실측 + 마지막 가상 아이템 도달 시 `fetchNextPage`.
 - **내부 스크롤 앱셸**: window 스크롤 대신 리스트 컨테이너가 스크롤 엘리먼트가 되게 — 루트 `h-dvh flex-col` → 스크롤 영역 `flex-1 min-h-0 overflow-y-auto`. `useWindowVirtualizer`의 `scrollMargin` 복잡도를 피한다.
-- 찜 페이지도 최대 개수 제한이 없어(로컬 저장 한도까지 증가) 같은 `useBookListVirtualizer`를 **재사용**한다 — `onLoadMore`는 서버 fetch 대신 로컬 청크(10개) reveal. 별도 무한 스크롤 훅을 새로 만들지 않는다(스크롤 패턴 단일화). 진짜 소량·고정 목록만 가상화 생략.
+- 찜 페이지도 최대 개수 제한이 없어(로컬 저장 한도까지 증가) 같은 `useVirtualScroll`를 **재사용**한다 — `onLoadMore`는 서버 fetch 대신 로컬 청크(10개) reveal. 별도 무한 스크롤 훅을 새로 만들지 않는다(스크롤 패턴 단일화). 진짜 소량·고정 목록만 가상화 생략.

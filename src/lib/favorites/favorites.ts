@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { LOCAL_STORAGE_KEY } from "@/constants/localStorageKey";
 import { getLocalStorage, setLocalStorage } from "@/utils/localStorage";
 
@@ -28,25 +27,16 @@ const toFavoriteBook = (book: FavoriteBook): FavoriteBook => ({
   thumbnail: book.thumbnail,
 });
 
-// 찜 목록 상태 훅 — 클릭 시점 스냅샷을 localStorage에 유지(토글). 홈 하트·찜 페이지 공유 SOT.
-const useFavorites = () => {
-  const [favorites, setFavorites] = useState<FavoriteBook[]>(() =>
-    getLocalStorage<FavoriteBook[]>(LOCAL_STORAGE_KEY.FAVORITES, [])
-  );
+export const readFavorites = () => getLocalStorage<FavoriteBook[]>(LOCAL_STORAGE_KEY.FAVORITES, []);
 
-  const favoriteHandler = {
-    isFavorite: (isbn: string) => favorites.some((book) => book.isbn === isbn),
-    toggle: (book: FavoriteBook) => {
-      const exists = favorites.some((item) => item.isbn === book.isbn);
-      const next = exists
-        ? favorites.filter((item) => item.isbn !== book.isbn)
-        : [toFavoriteBook(book), ...favorites];
-      setFavorites(next);
-      setLocalStorage(LOCAL_STORAGE_KEY.FAVORITES, next);
-    },
-  };
+export const writeFavorites = (list: FavoriteBook[]) =>
+  setLocalStorage(LOCAL_STORAGE_KEY.FAVORITES, list);
 
-  return { favorites, favoriteHandler };
-};
+export const isFavorite = (list: FavoriteBook[], isbn: string) =>
+  list.some((book) => book.isbn === isbn);
 
-export { useFavorites };
+// 있으면 제거, 없으면 스냅샷을 맨 앞에 추가한 새 배열을 반환한다(순수 — 입력→출력).
+export const toggleFavorite = (list: FavoriteBook[], book: FavoriteBook): FavoriteBook[] =>
+  isFavorite(list, book.isbn)
+    ? list.filter((item) => item.isbn !== book.isbn)
+    : [toFavoriteBook(book), ...list];

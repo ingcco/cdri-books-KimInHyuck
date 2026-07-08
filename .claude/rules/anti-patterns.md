@@ -723,14 +723,17 @@ useEffect(() => { if (detailTarget) setDraft(""); }, [detailTarget]);
 
 ```tsx
 // ✅ After — ref는 dedicated 훅이 소유·반환, Context엔 안 실음
-const { scrollRef } = useBookListVirtualizer({ count, hasNextPage, onLoadMore });
+const { scrollRef } = useVirtualScroll({ count, hasNextPage, onLoadMore });
 <div ref={scrollRef} />
 
-// ✅ 리셋은 effect 말고 key 교체 (React 공식 권장)
-<SearchField key={filters.target} />  // useSearchInput(filters.target ? "" : filters.q)
+// ✅ 리셋은 effect 말고 — (a) key 교체(전체 리셋) 또는 (b) 이전 값 useState 비교(일부 state 동기화)
+// (a) 예: <BookResultList key={`${filters.q}|${filters.target}`} />  (virtualizer 재생성)
+// (b) 예: useSearchInput이 URL 검색어 변경 시 입력 버퍼 동기화 (ref 아님 — react-hooks/refs 회피)
+const [prev, setPrev] = useState(initialValue);
+if (prev !== initialValue) { setPrev(initialValue); setDraft(initialValue); }
 ```
 
-**WHY**: (1) React19 `react-hooks/refs`는 render 중 ref 접근을 막는데, ref가 Context value 객체 안에 있으면 그 객체의 **모든 프로퍼티 접근**이 render-time ref 접근으로 플래그된다 — ref는 그것을 쓰는 dedicated 훅이 소유하고 JSX `ref={}`로만 부착. (2) `react-hooks/set-state-in-effect`는 effect 내 `setState`(cascading render)를 막는다 — "prop 바뀌면 리셋"은 `key` 교체가 정석.
+**WHY**: (1) React19 `react-hooks/refs`는 render 중 ref 접근을 막는데, ref가 Context value 객체 안에 있으면 그 객체의 **모든 프로퍼티 접근**이 render-time ref 접근으로 플래그된다 — ref는 그것을 쓰는 dedicated 훅이 소유하고 JSX `ref={}`로만 부착. (2) `react-hooks/set-state-in-effect`는 effect 내 `setState`를, `react-hooks/refs`는 렌더 중 ref 접근을 막는다 — "prop 바뀌면 리셋"은 `key` 교체(전체) 또는 이전 값을 **`useState`로**(ref ❌) 들고 렌더 중 비교해 조정(일부).
 
 **관련**: `react.md` "ref는 dedicated 훅이 소유", `RX-11`(cleanup)
 

@@ -196,7 +196,7 @@ grep -rEn "(apiKey|API_KEY|token)\s*[:=]\s*['\"][A-Za-z0-9]{20,}['\"]" src 2>/de
 **환경변수 분리 후 점검:**
 
 - [ ] `.env*`이 `.gitignore`에 포함 + 미커밋 재확인
-- [ ] Vercel 프로젝트 환경변수에 `VITE_KAKAO_REST_API_KEY` 등록 (빌드 시 번들에 주입됨을 인지)
+- [ ] 프로덕션 빌드(`pnpm build`) 산출물에 `VITE_KAKAO_REST_API_KEY`가 번들로 주입됨을 인지 (CSR 직접 호출 전제). 배포는 미채택 — 배포 시 키가 공개 URL에 실노출됨을 README 트레이드오프에 명시
 - [ ] 기존 커밋 이력에 키 노출 시 카카오 콘솔에서 키 재발급 (rotate)
 
 ### [A06] Vulnerable Components — 취약한 컴포넌트

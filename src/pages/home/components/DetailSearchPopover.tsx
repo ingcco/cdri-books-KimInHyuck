@@ -31,7 +31,7 @@ const DetailSearchPopover = () => {
         className={styles.close()}
         onClick={detailSearch.close}
       >
-        <CloseIcon aria-hidden="true" className="size-5" />
+        <CloseIcon aria-hidden="true" className="size-3" />
       </button>
       <div className={styles.row()}>
         <Dropdown

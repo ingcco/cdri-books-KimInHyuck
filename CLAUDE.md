@@ -22,17 +22,18 @@
 | axios | `dapi.kakao.com` 직접 호출 인스턴스 + 인터셉터로 에러 정규화 |
 | 자체 UI 컴포넌트 | 평가 기준 1번(재사용 컴포넌트 설계) 직접 어필 — 외부 UI 킷 미사용 |
 | Vitest + MSW / Playwright | unit·integration(API 계층 함수+훅을 `dapi.kakao.com` MSW 스텁으로 검증) / e2e |
-| pnpm, Vercel | 단일 패키지, 배포 후 URL 제출 |
+| pnpm | 단일 패키지 관리. 배포(Vercel)는 미채택 — 클라이언트 키 실노출/쿼터 남용 리스크 + 과제 필수 요건 아님(제출은 GitHub Public Repo). 로컬 실행법·Lighthouse 지표를 README에 기록하는 것으로 대체 |
 
 전역 상태 라이브러리(Redux/Zustand) 미사용 — 서버 상태는 RQ, URL 상태는 nuqs, 찜은 localStorage, 나머지는 useState/Context로 충분. 이 판단 자체가 근거다.
 
 ## 보안 불변식 (위반 = 즉시 중단)
 
-> 이 앱은 카카오 API를 클라이언트에서 직접 호출한다(BFF/프록시 없음). 키의 **번들 노출은 과제 전제**(과제가 `.env`를 이메일로 제출받는 방식)다. 따라서 "서버 은닉"이 아니라 아래 3가지를 불변식으로 지킨다.
+> 이 앱은 카카오 API를 클라이언트에서 직접 호출한다(BFF/프록시 없음). 키의 **번들 노출은 과제 전제**(과제가 `.env`를 이메일로 제출받는 방식)다. 따라서 "서버 은닉"이 아니라 아래 2가지를 불변식으로 지킨다.
 
 - 카카오 REST 키는 `VITE_KAKAO_REST_API_KEY`로 두고 **`import.meta.env`로만 접근**. 소스에 키 문자열/`KakaoAK <실키>` 하드코딩 절대 금지
 - `.env`·`.env.local` 등 실제 키가 담긴 파일은 **커밋 절대 금지**(`.gitignore` 필수, 커밋 이력에도 없어야 함). `.env.example`은 placeholder만 담아 커밋
-- README에 **트레이드오프 명시 의무**: "실서비스라면 BFF 프록시로 키를 은닉해야 하나, 본 과제는 `.env` 이메일 제출 방식이라 클라이언트 직접 호출을 채택" 근거를 기술
+
+> README 보안 트레이드오프 명시 의무는 폐기(2026-07-09) — 키를 `.env`로 이메일 별도 제출받는 구조라 "클라이언트 노출 트레이드오프" 서술이 사족. 위 2개 불변식(하드코딩·커밋 금지)만 유지한다.
 
 ## 작업 루프
 
@@ -46,7 +47,7 @@
 
 - `src/` 기준 수직 슬라이스. 페이지: `src/pages/{Name}Page/` = `{Name}Page.tsx`(얇은 조립) + `hooks/useXxx.ts`(페이지 상태 전부) + `components/`(Context 소비만) + `styles/*.style.ts`(tv 슬롯) — 상세: `.claude/rules/page.md`
 - 데이터 3계층: `src/lib/api/index.ts`(axios가 `https://dapi.kakao.com`에 `Authorization: KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}` 헤더로 직접 요청, `validateStatus`로 성공(2xx) 판정 — 나머지는 axios가 그대로 reject) → `src/lib/api/{books,favorites}/api.ts`(순수 요청 함수, 카카오 `{ documents, meta }` 그대로 반환) + `api.interface.ts`(도메인 타입) → `api.queries.ts`(useQuery/useMutation), queryKey는 `src/lib/api/shared/queryKeys.ts` 팩토리 집중, 공유 요청/응답 타입은 `src/lib/api/shared/{request,response}.ts`(`FailResponse` = 카카오 게이트웨이 실에러 바디 `{errorType,message}`). 서버(BFF) 없는 CSR 단독 앱이라 "client" 폴더 네이밍은 두지 않음(client/server 대응 개념 자체가 없음) [2026-07-08]. 에러를 critical(에러 페이지)/recoverable(토스트)로 나누는 판단은 http 클라이언트에 두지 않고 **소비 시점(Step 4.1, `error.response?.status` 직접 참조)** 에서 함 — 미리 만든 `ApiError`/severity 분류는 과잉설계로 판단해 폐기
-- 공용 UI는 `src/components/`, 공통 훅은 `src/hooks/`(useSearchHistory/useFavorites/useSearchInput/useOutsideClick), 순수 유틸은 `src/utils/`(localStorage/number). 찜·검색기록은 `src/hooks` 상태 훅 + `src/utils/localStorage` 순수 래퍼 조합(`src/lib/storage`·`src/lib/utils` 폐기, 2026-07-08 F-13)
+- 공용 UI는 `src/components/`. 훅 배치 = **제네릭 메커니즘**(도메인 무관)은 `src/hooks/`(useOutsideClick/useVirtualScroll/useCollapse), **도메인 훅**은 소유자에 — home 전용(검색입력·검색기록)은 `src/pages/home/hooks/`, 홈+찜 공유는 도메인 모듈 `src/lib/favorites/`(순수 `favorites.ts` + 상태 훅 `useFavorites.ts`, books `api.ts`/`api.queries.ts`와 동형). 순수 유틸은 `src/utils/`(localStorage/number). localStorage 사용은 구현 디테일이지 공통 근거가 아님(`src/lib/storage`·`src/lib/utils` 폐기 2026-07-08 F-13, 훅 배치 2단계 판정 재정립 2026-07-09)
 
 ## 테스트 정책
 

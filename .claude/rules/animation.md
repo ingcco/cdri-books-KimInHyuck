@@ -13,7 +13,7 @@ framer-motion 기반 재사용 애니메이션의 정의·소비·검증 규약.
 재사용 애니는 **값 프리셋**으로 `src/lib/animation/transition.ts`에 정의하고 `{...animation.fade}`로 소비한다. 프리셋은 순수 값(`initial`/`animate`/`exit`)이며 `compose(...)`로 합성한다.
 
 - **값으로 표현 가능** → 프리셋 (fade, dropdown, fadeUp, slide, pop 등). 소비처는 `<m.div {...animation.dropdown}>`.
-- **컴포넌트 렌더 상태 제어** → dedicated 훅. 프리셋(값)으로 표현 불가한 것. 프로젝트의 `useSearchInput`·`useOutsideClick`·`useBookListVirtualizer`와 같은 층위.
+- **컴포넌트 렌더 상태 제어** → dedicated 훅. 프리셋(값)으로 표현 불가한 것. 프로젝트의 `useSearchInput`·`useOutsideClick`·`useVirtualScroll`와 같은 층위.
   - 예: 아코디언 닫힘 시 "상세 콘텐츠를 height 트윈 동안 유지했다가 언마운트"(`useCollapse`)는 `showDetail` 렌더 상태 제어라 값 프리셋으로 불가능.
 
 > **판단**: 새 애니를 넣을 때 먼저 "값 프리셋으로 되는가?"를 본다. 되면 프리셋, 렌더 상태가 개입하면 최소 훅. 훅을 만들었다고 프리셋 원칙이 깨진 게 아니다 — 층위가 다르다.

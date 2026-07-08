@@ -3,12 +3,12 @@ import Input, { type InputProps } from "../Input";
 import { searchVariants } from "./Search.style";
 import SearchIcon from "@/assets/icons/search.svg";
 
-export interface SearchProps extends Omit<InputProps, "containerClassName" | "prefix"> {
+export interface SearchProps extends Omit<InputProps, "prefix"> {
   ref?: Ref<HTMLInputElement>;
 }
 
 const Search = (props: SearchProps) => {
-  const { ref, className, ...rest } = props;
+  const { ref, className, containerClassName, ...rest } = props;
 
   const styles = searchVariants();
 
@@ -18,7 +18,7 @@ const Search = (props: SearchProps) => {
       type="search"
       aria-label="검색어"
       prefix={<SearchIcon aria-hidden="true" className={styles.icon()} />}
-      containerClassName={styles.container()}
+      containerClassName={styles.container({ className: containerClassName })}
       className={styles.input({ className })}
       {...rest}
     />

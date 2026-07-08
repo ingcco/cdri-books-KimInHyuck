@@ -1,9 +1,9 @@
 import { parseAsString, useQueryStates } from "nuqs";
 import { createContext, useContext, useState } from "react";
-import { useFavorites } from "@/hooks/useFavorites";
-import { useSearchHistory } from "@/hooks/useSearchHistory";
+import { useSearchHistory } from "./useSearchHistory";
 import type { SearchTarget } from "@/lib/api/books/api.interface";
 import { EMPTY_BOOK_LIST, PAGE_SIZE, useBookListInfiniteQuery } from "@/lib/api/books/api.queries";
+import { useFavorites } from "@/lib/favorites/useFavorites";
 
 type HomeContextValue = ReturnType<typeof useHome>;
 

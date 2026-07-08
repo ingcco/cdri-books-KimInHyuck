@@ -40,7 +40,7 @@ Header GNB: 도서 검색 ↔ 내가 찜한 책 탭 전환, 활성 탭 언더라
 | 2.5 | 아코디언 가격: **할인가 없으면(`sale_price === -1`) 할인가 미노출** | u/e |
 | 2.6 | 카운트 "도서 검색 결과 총 N건" (숫자만 `primary`) | e |
 
-> 무한 스크롤 구현: **react-virtual**(`useBookListVirtualizer` — 마지막 가상 아이템 도달 시 `fetchNextPage`). IntersectionObserver 미사용. [추가]
+> 무한 스크롤 구현: **react-virtual**(`useVirtualScroll` — 마지막 가상 아이템 도달 시 `fetchNextPage`). IntersectionObserver 미사용. [추가]
 
 ## 3. 상세 검색 [F]
 
@@ -97,7 +97,7 @@ Header GNB: 도서 검색 ↔ 내가 찜한 책 탭 전환, 활성 탭 언더라
 | 7-2 | **URL 상태 동기화**(nuqs `?q`,`?target`) — 새로고침·뒤로가기·링크 공유 복원 | [추가] | `useHome` | e |
 | 7-3 | **전역 에러 처리**: critical(401/403/404/503/5xx)→`/error` 이동, recoverable→**Toast**(문구는 쿼리 `meta.errorMessage` 소유) | [추가] | `queryClient` | i/e |
 | 7-4 | **404 Not Found**(`*`) + ErrorPage 라우트 | [추가] | `router` | e |
-| 7-5 | **무한 스크롤 = react-virtual**(가상화로 DOM 누적 방지, 성능) | [추가] | `useBookListVirtualizer` | e |
+| 7-5 | **무한 스크롤 = react-virtual**(가상화로 DOM 누적 방지, 성능) | [추가] | `useVirtualScroll` | e |
 | 7-6 | **아코디언 단일 열림** | [판단] | `useHome.openIsbn` | e |
 | 7-7 | **찜 스냅샷 큐레이션**(`FavoriteBook` DTO — 렌더 필드만) | [판단] | `useFavorites` | u |
 | 7-8 | **검색 기록 키보드 네비**(↑↓/Enter/Esc, `onMouseDown` preventDefault로 blur 선점) | [추가] | `SearchField`,`useSearchInput` | e |

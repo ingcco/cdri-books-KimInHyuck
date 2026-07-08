@@ -38,12 +38,34 @@ git diff --stat
    ```
 4. **커밋 직전 `git diff --cached --name-only` 재확인** — staged 목록이 이번 작업 범위와 정확히 일치하는지 확인 후 커밋
 
-### 2. 테스트 (해당 시)
+### 1.5. 테스트 영향 감지 (F-8 게이트)
 
-테스트 파일 또는 테스트 대상 로직이 변경됐으면:
+커밋 직전, 변경된 소스가 요구하는 테스트 레벨이 **함께 변경됐는지** 점검한다. 전 파일에 테스트를 강제하는 게 아니라(리스크 원칙), 리스크 계층을 건드렸는데 대응 테스트가 diff에 없을 때만 확인을 요청하는 **리마인드**다.
 
 ```bash
-pnpm test
+node .claude/skills/ship/scripts/test-impact.mjs
+```
+
+- `[test-impact] OK` (exit 0) → 통과, 다음 단계로
+- `[test-impact] REVIEW` (exit 1) → **강제 중단 아님**. 스크립트가 지목한 소스·레벨을 사용자에게 제시하고 *"테스트 갱신이 필요한 변경인가, 의도된 것인가"* 를 확인한다. 의도된 변경이면 그대로 진행, 갱신이 필요하면 커밋 전에 테스트를 반영.
+
+**경로 → 레벨 매핑** (SOT: `.docs/spec/requirements.md` 레벨 태그 u/i/e):
+
+| 변경 소스 | 요구 레벨 |
+|---|---|
+| `src/lib/api/*/api.ts`·`api.queries.ts` | integration |
+| `use*.ts`(훅)·`src/utils/**`·`lib/favorites/favorites.ts`·`lib/api/shared/*.ts` | unit |
+| `**/*.tsx`(페이지·컴포넌트·레이아웃·라우터) | e2e |
+| `*.style.ts`·`constants/`·`*.interface.ts`·`assets/` | skip |
+
+### 2. 테스트 (해당 시)
+
+1.5에서 REVIEW가 떴거나 테스트 파일/테스트 대상 로직이 변경됐으면 해당 레벨을 실행:
+
+```bash
+pnpm test:unit          # 순수 함수·훅
+pnpm test:integration   # API 계층 + React Query (MSW)
+pnpm test:e2e           # Playwright 여정·시각정합
 ```
 
 ### 3. 린트 + 타입체크

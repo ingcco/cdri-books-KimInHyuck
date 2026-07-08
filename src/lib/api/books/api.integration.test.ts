@@ -1,7 +1,7 @@
 import { HttpResponse, http } from "msw";
 import { describe, expect, it } from "vitest";
-import { getBookList } from "../../../lib/api/books/api";
-import { server } from "../msw/server";
+import { getBookList } from "./api";
+import { server } from "@/test/msw-server";
 
 const BOOK_SEARCH_URL = "https://dapi.kakao.com/v3/search/book";
 

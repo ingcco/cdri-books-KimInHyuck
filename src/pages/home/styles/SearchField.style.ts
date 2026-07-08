@@ -3,11 +3,14 @@ import { tv } from "tailwind-variants";
 export const searchFieldVariants = tv({
   slots: {
     searchArea: "relative w-[480px]",
+    // 히스토리 = 입력창과 이어진 하나의 박스(연속) — 입력 pill 아래에 붙어 하단만 둥글게(r24)
     historyList:
-      "bg-light-gray absolute top-full left-0 z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-[16px] py-2 shadow-sm",
-    historyItem: "flex items-center justify-between px-5 py-2 hover:bg-gray",
-    historyLabel: "body2 text-text-secondary flex-1 cursor-pointer truncate text-left",
-    historyRemove: "body2 text-text-subtitle shrink-0 cursor-pointer px-1",
+      "bg-light-gray absolute top-[50px] left-0 z-10 w-full overflow-hidden rounded-b-[24px] pb-6",
+    historyItem: "flex h-10 items-center pr-[25px] pl-[51px]",
+    historyLabel:
+      "flex-1 cursor-pointer truncate text-left text-base font-medium text-text-subtitle",
+    historyRemove: "flex size-6 shrink-0 cursor-pointer items-center justify-center text-black",
+    clear: "flex size-6 shrink-0 cursor-pointer items-center justify-center text-[#B1B8C0]",
   },
 });
 
