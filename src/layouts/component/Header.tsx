@@ -1,8 +1,7 @@
 import { Link, NavLink } from "react-router";
 import { ROUTES } from "@/constants/routes";
 
-// Figma `Header`(1920×80) 1:1 — 로고 title1 + 탭 body1, 활성 탭은 primary 언더라인.
-// 탭 컴포넌트 대신 NavLink로 라우트 링크 처리(사용자 결정) — isActive로 활성 스타일 분기.
+// Figma `Header`(1920×80) 1:1 — 로고 좌측 + 탭 중앙(우측 여백). 활성 탭은 primary 언더라인.
 const NAV_ITEMS = [
   { to: ROUTES.home, label: "도서 검색", end: true },
   { to: ROUTES.favorites, label: "내가 찜한 책", end: false },
@@ -11,11 +10,11 @@ const NAV_ITEMS = [
 const Header = () => {
   return (
     <header className="h-20 w-full">
-      <div className="mx-auto flex h-full max-w-[960px] items-center justify-between px-4">
+      <div className="relative mx-auto flex h-full max-w-[1620px] items-center px-4">
         <Link to={ROUTES.home} className="title1 text-text-primary">
           CERTICOS BOOKS
         </Link>
-        <nav className="flex items-center gap-x-8">
+        <nav className="absolute left-1/2 flex -translate-x-1/2 items-center gap-x-8">
           {NAV_ITEMS.map(({ to, label, end }) => (
             <NavLink
               key={to}

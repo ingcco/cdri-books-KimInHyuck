@@ -69,12 +69,21 @@ const useHome = () => {
     close: () => setIsDetailOpen(false),
   };
 
+  // 아코디언 단일 열림 — 열린 항목의 isbn 하나만 보관
+  const [openIsbn, setOpenIsbn] = useState<string | null>(null);
+
+  const hasBooks = data.documents.length > 0;
+
   const result = {
     data,
-    isSearching: booksQuery.isFetching && data.documents.length === 0,
+    hasBooks,
+    isSearching: booksQuery.isFetching && !hasBooks,
+    isEmpty: booksQuery.isFetched && !booksQuery.isFetching && !hasBooks,
     isFetched: booksQuery.isFetched,
-    fetchNextPage: booksQuery.fetchNextPage,
     hasNextPage: booksQuery.hasNextPage,
+    fetchNextPage: booksQuery.fetchNextPage,
+    openIsbn,
+    toggleOpen: (isbn: string) => setOpenIsbn((cur) => (cur === isbn ? null : isbn)),
     favorite: favoriteHandler,
   };
 

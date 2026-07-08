@@ -44,5 +44,6 @@ export const useBookListInfiniteQuery = <TData = BookListResult>(
       }) as TData,
     placeholderData: keepPreviousData,
     enabled: params.query.trim().length > 0,
+    meta: { errorMessage: "검색 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요." },
     ...options,
   });

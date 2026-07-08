@@ -16,6 +16,14 @@ const DetailSearchPopover = () => {
 
   return (
     <div ref={ref} role="dialog" aria-label="상세 검색" className={styles.popover()}>
+      <button
+        type="button"
+        aria-label="상세 검색 닫기"
+        className={styles.close()}
+        onClick={detailSearch.close}
+      >
+        ✕
+      </button>
       <div className={styles.row()}>
         <Dropdown
           label="검색 대상"

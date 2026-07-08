@@ -8,9 +8,9 @@ import Header from "./component/Header";
 const DefaultLayout = () => {
   return (
     <NuqsAdapter>
-      <div className="flex min-h-dvh flex-col">
+      <div className="flex h-dvh flex-col">
         <Header />
-        <main className="flex-1">
+        <main className="min-h-0 flex-1">
           <Outlet />
         </main>
       </div>
