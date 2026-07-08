@@ -72,7 +72,7 @@ sequenceDiagram
 - [x] Step 1.1: Vite + React + TS 스캐폴딩
   - 작업: `pnpm create vite`(react-ts 템플릿, 빈 임시 디렉토리에 생성 후 루트로 이동 — `create-vite`는 비어있지 않은 디렉토리에서 비대화형 실행 불가)
   - 검증: `pnpm dev` 기동 + 기본 페이지 렌더
-- [x] Step 1.2: 코드 품질 툴링 (vxt-fashion-admin 레퍼런스 기반 PAAR로 확정)
+- [x] Step 1.2: 코드 품질 툴링 (Next.js 어드민 레퍼런스 기반 PAAR로 확정)
   - 작업: ESLint flat config(`@eslint/js` + `typescript-eslint` + `eslint-plugin-react`/`react-hooks`/`jsx-a11y`/`unused-imports` + `eslint-config-prettier`, **9.39.1 고정**), Prettier(레퍼런스 설정값 + `prettier-plugin-tailwindcss`, ESLint와 역할 분리), Husky(`"prepare": "husky"` 필수 — 레퍼런스는 이게 빠져 훅이 비활성이었음) + lint-staged(pre-commit) + pre-push(check-types)
   - 검증: `pnpm lint`/`pnpm lint:fix`/`pnpm format` 통과, `pnpm exec lint-staged` 스테이징 파일 대상 정상 동작 확인
 - [x] Step 1.3: 핵심 라이브러리 설치 (스펙 매핑 PAAR로 확정, 상세: `book-search-app.backlog.md`)
@@ -90,11 +90,11 @@ sequenceDiagram
 - [x] Step 1.6: 환경 변수 설계
   - 작업: `.env.example`(`VITE_KAKAO_REST_API_KEY=` + 발급 방법·BFF 미도입 트레이드오프 주석)
   - 검증: `.gitignore`가 `.env`/`.env.*`(`!.env.example` 예외) 차단 확인 + 하네스 `guard-secrets.sh` 훅이 `.env.local` 관련 `git add` 자체를 세이프가드 레벨에서 차단하는 것도 확인(이중 방어)
-- [x] Step 1.7: 폴더 구조·라우터·룰 보강 조사 (vxt-fashion-admin + web-andrsen 하이브리드, react-router 실사례 확보)
-  - 조사: vxt-fashion-admin(Next.js App Router) vs web-andrsen(Vite+react-router-dom v6, 실제 react-router 프로젝트) 비교
-  - 결론 1 (폴더 구조 — 변경 없음): `page.md`가 이미 vxt의 `lib/api/{domain}/{api.ts,api.queries.ts}` + `page.tsx+hooks+components+styles` 구조를 반영 중. web-andrsen도 동일 결(Context Provider 패턴: `createContext`+`useXxxContext`+`useXxx` 통합 export)이라 교차 검증만 되고 변경 불필요
-  - 결론 2 (라우터 — web-andrsen 참고, Step 4.1에 반영): 라우트 경로 상수화(`src/constants/routes.ts`, role/guard 없이 path만), 공유 레이아웃을 라우트 트리 `element`로 감싸기(Header/GNB), `path: "*"` NotFound catch-all(anti-patterns.md RX-13과 정합). web-andrsen의 `createRoutesFromElements` JSX 트리는 인증 가드 중첩용이라 우리(무인증, 라우트 2개)에겐 과함 — **object 배열 config**(`createBrowserRouter([{ element: <RootLayout />, children: [...] }])`)로 단순화. 추가로 `/favorites`는 `React.lazy` 코드 스플리팅 후보(web-andrsen엔 없는 패턴, Lighthouse Performance 평가축 고려한 자체 제안)
-  - 결론 3 (ESLint 보강 — 적용 완료): web-andrsen `.eslintrc.cjs`에서 우리 flat config에 없던 3개 발견, ESLint 9 호환 확인 후 설치·적용 — `eslint-plugin-import-x`(`import-x/order`, 원조 `-import` 대신 flat config 대응 나은 fork), `@tanstack/eslint-plugin-query`(`exhaustive-deps`/`stable-query-client` 등 — react.md RQ 컨벤션 RX-2/7/12를 기계적으로 일부 강제), `eslint-plugin-tailwindcss@4.0.6`(Tailwind v4 공식 지원 확인됨, `cssConfigPath: "./src/index.css"`로 커스텀 토큰 인식)
+- [x] Step 1.7: 폴더 구조·라우터·룰 보강 조사 (Next.js 어드민 레퍼런스 + Vite/react-router 레퍼런스 하이브리드, react-router 실사례 확보)
+  - 조사: Next.js 어드민 레퍼런스(Next.js App Router) vs Vite/react-router 레퍼런스(Vite+react-router-dom v6, 실제 react-router 프로젝트) 비교
+  - 결론 1 (폴더 구조 — 변경 없음): `page.md`가 이미 `lib/api/{domain}/{api.ts,api.queries.ts}` + `page.tsx+hooks+components+styles` 구조를 반영 중. Vite/react-router 레퍼런스도 동일 결(Context Provider 패턴: `createContext`+`useXxxContext`+`useXxx` 통합 export)이라 교차 검증만 되고 변경 불필요
+  - 결론 2 (라우터 — Vite/react-router 레퍼런스 참고, Step 4.1에 반영): 라우트 경로 상수화(`src/constants/routes.ts`, role/guard 없이 path만), 공유 레이아웃을 라우트 트리 `element`로 감싸기(Header/GNB), `path: "*"` NotFound catch-all(anti-patterns.md RX-13과 정합). 레퍼런스의 `createRoutesFromElements` JSX 트리는 인증 가드 중첩용이라 우리(무인증, 라우트 2개)에겐 과함 — **object 배열 config**(`createBrowserRouter([{ element: <RootLayout />, children: [...] }])`)로 단순화. 추가로 `/favorites`는 `React.lazy` 코드 스플리팅 후보(레퍼런스엔 없는 패턴, Lighthouse Performance 평가축 고려한 자체 제안)
+  - 결론 3 (ESLint 보강 — 적용 완료): Vite/react-router 레퍼런스의 ESLint 설정에서 우리 flat config에 없던 3개 발견, ESLint 9 호환 확인 후 설치·적용 — `eslint-plugin-import-x`(`import-x/order`, 원조 `-import` 대신 flat config 대응 나은 fork), `@tanstack/eslint-plugin-query`(`exhaustive-deps`/`stable-query-client` 등 — react.md RQ 컨벤션 RX-2/7/12를 기계적으로 일부 강제), `eslint-plugin-tailwindcss@4.0.6`(Tailwind v4 공식 지원 확인됨, `cssConfigPath: "./src/index.css"`로 커스텀 토큰 인식)
   - `import-x/no-unresolved`는 off 처리(경로 별칭 리졸버 미설치, tsc가 이미 미해결 import를 컴파일 에러로 잡음)
   - 정정(2026-07-08): `--radius-button`/`--radius-pill`을 사용자가 의도적으로 `@theme`에서 제거했던 것을 "실수로 삭제된 회귀"로 오판해 되살렸다가, 이후 색상과 동일한 원칙(Style 레이어가 정의하지 않은 값은 전역 토큰화 금지)이 radius에도 적용된다는 사용자 지적으로 재삭제 확정 — `tokens.md` §3/§4 반영
   - 검증: `pnpm check-types`/`pnpm lint` 통과(App.tsx 스캐폴딩 잔존 경고만 남음 — Phase 4에서 전면 교체 예정이라 방치), 커스텀 토큰(`bg-primary`/`title1` 등) 단독 사용 시 무경고 확인(임시 probe 파일로 검증 후 삭제)
@@ -102,15 +102,15 @@ sequenceDiagram
 ### Phase 2: 데이터 계층 (카카오 직접 호출 — Route Handler 프록시 없음)
 
 - [x] Step 2.1: API 클라이언트
-  - 작업: `src/lib/api/index.ts` — axios 인스턴스(`baseURL: https://dapi.kakao.com`, `Authorization: KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`), `validateStatus: (status) => status >= 200 && status < 300`로 성공 판정 — 나머지는 axios가 그대로 reject(web-andrsen `src/api/index.ts`와 동일 패턴). 인터셉터·로깅 없음 — DEV 콘솔 로그도 불필요 판단으로 제거(2026-07-08). `src/lib/api/shared/response.ts`에 `FailResponse{errorType,message}` 타입만 정의 — **라이브 curl로 확인한 API 게이트웨이 실포맷**(예: `AccessDeniedError`/`ResourceNotFound`, `x-apihub-error-from: apihub` 헤더로 확인, 2026-07-08), 아직 아무 곳에서도 import 안 함(Step 2.2에서 필요해지면 사용)
+  - 작업: `src/lib/api/index.ts` — axios 인스턴스(`baseURL: https://dapi.kakao.com`, `Authorization: KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`), `validateStatus: (status) => status >= 200 && status < 300`로 성공 판정 — 나머지는 axios가 그대로 reject(Vite/react-router 레퍼런스의 `src/api/index.ts`와 동일 패턴). 인터셉터·로깅 없음 — DEV 콘솔 로그도 불필요 판단으로 제거(2026-07-08). `src/lib/api/shared/response.ts`에 `FailResponse{errorType,message}` 타입만 정의 — **라이브 curl로 확인한 API 게이트웨이 실포맷**(예: `AccessDeniedError`/`ResourceNotFound`, `x-apihub-error-from: apihub` 헤더로 확인, 2026-07-08), 아직 아무 곳에서도 import 안 함(Step 2.2에서 필요해지면 사용)
   - **철회(2026-07-08)**: 최초 설계했던 `ApiError extends Error { status, message, severity }`(critical/recoverable 2분류 + 상태별 메시지 매핑)는 **과잉설계로 판단해 폐기**. http 클라이언트 레이어에서 UX 분류까지 미리 정할 필요 없음 — `error.response?.status`가 표준 `AxiosError`에 그대로 남아있으니 critical(에러 페이지)/recoverable(토스트) 판단은 **Step 4.1(실제 소비 시점)**로 이연
   - 검증: 없음(로직 없는 설정 파일이라 unit 테스트 대상 아님) — `pnpm check-types`/`pnpm lint` 통과로 대체
-- [x] Step 2.1.5: 도메인 폴더 구조 확정 (web-andrsen + vxt-fashion-admin 비교 후 절충, 2026-07-08 PAAR)
+- [x] Step 2.1.5: 도메인 폴더 구조 확정 (Vite/react-router 레퍼런스 + Next.js 어드민 레퍼런스 비교 후 절충, 2026-07-08 PAAR)
   - 작업: `src/lib/api/{domain}/{api.ts,api.queries.ts,api.interface.ts}` + `src/lib/api/shared/{request.ts,response.ts,queryKeys.ts}`. `api.exception.ts`는 **지금 빈 파일로 만들지 않음** — Step 2.2/2.3에서 실제 도메인별 예외 처리 필요가 생기면 그때 추가
   - 검증: 없음(구조 결정, `.claude/rules/{conventions,page}.md` + `CLAUDE.md` 반영 완료로 검증 대체)
 - [x] Step 2.2: 도서 검색 API — **React Query 무한 스크롤**
   - 작업: `src/lib/api/books/{api.ts,api.queries.ts,api.interface.ts}` — `getBookList()`(query/target/page/size, 카카오 `{ documents, meta }` 그대로 반환), `useBookListInfiniteQuery`(`useInfiniteQuery` + `keepPreviousData`, `meta.is_end` 기반 `getNextPageParam` 종료조건), `src/lib/api/shared/{request.ts,response.ts,queryKeys.ts}`. size는 요구사항대로 **10 고정**(`PAGE_SIZE` 상수, 훅 파라미터에서 `page`/`size` 제외). `select`로 `pages[]`를 `{documents, meta}` 평탄화해서 반환(2026-07-08 확정 — RX-7/RX-12 select 패턴)
-  - **네이밍/구조 web-andrsen 정렬(2026-07-08)**: `searchBooks`→`getBookList`(`get{Domain}List` 패턴), `BookSearchParams`→`BookListParams`, 응답 페이지네이션 메타(`total_count`/`pageable_count`/`is_end`)는 도서 도메인 전용이 아니라 카카오 검색 API 공통 shape이라 `shared/response.ts`의 제네릭 `KakaoSearchResponse<T>`/`KakaoSearchMeta`로 이동(book 전용 `BookSearchResponse` 타입 제거), `bookKeys.search`→`bookKeys.list`, `EMPTY_BOOK_SEARCH`→`EMPTY_BOOK_LIST`. 테스트 폴더도 `__tests__/`(repo 루트) → `src/__tests__/`로 이동(web-andrsen은 테스트를 `src/` 하위에 colocate)
+  - **네이밍/구조 레퍼런스 정렬(2026-07-08)**: `searchBooks`→`getBookList`(`get{Domain}List` 패턴), `BookSearchParams`→`BookListParams`, 응답 페이지네이션 메타(`total_count`/`pageable_count`/`is_end`)는 도서 도메인 전용이 아니라 카카오 검색 API 공통 shape이라 `shared/response.ts`의 제네릭 `KakaoSearchResponse<T>`/`KakaoSearchMeta`로 이동(book 전용 `BookSearchResponse` 타입 제거), `bookKeys.search`→`bookKeys.list`, `EMPTY_BOOK_SEARCH`→`EMPTY_BOOK_LIST`. 테스트 폴더도 `__tests__/`(repo 루트) → `src/__tests__/`로 이동(Vite/react-router 레퍼런스는 테스트를 `src/` 하위에 colocate)
   - 검증: integration 테스트 — MSW(node)로 `dapi.kakao.com` 스텁(성공/빈결과/target 매핑/400·401·503·500) + `useBookListInfiniteQuery` 훅 테스트(jsdom, renderHook) — **`getNextPageParam` 종료조건 오판 시 무한 요청 루프 방지 케이스**(is_end=true 이후 `fetchNextPage()` 재호출해도 요청 카운트 불변) 통과
   - **TanStack Virtual 연동 후보(사용자 요청, 2026-07-08)**: 이 Step은 데이터 계층이라 아직 렌더링할 리스트 UI가 없음 — 실제 결과 리스트 컴포넌트를 만드는 **Step 3.2(BookList) 또는 Step 4.2(SearchPage 조립)**에서 `@tanstack/react-virtual` 도입 여부를 PAAR로 재논의(라이브러리 신규 설치라 승인 필요)
 - [x] Step 2.3: ~~찜/검색기록 저장소~~ **Phase 4로 이연(2026-07-08)** — 사용자 판단: Phase 2는 "서버(데이터 계층) 설계" 범위이지 실제 UI 소비 로직까지 미리 만들 단계가 아님. storage 구현은 실제 소비 UI(하트 토글, 검색창)를 만드는 시점(Step 4.2/4.3)에서 그때 필요한 모양대로 설계. 단, 이번 논의에서 합의된 방향은 기록해둠(아래 Step 4.2/4.3 참조):
@@ -133,7 +133,7 @@ sequenceDiagram
 ### Phase 4: 페이지 조립 (react-router)
 
 - [ ] Step 4.1: 라우터 설정 (Step 1.7 조사 반영)
-  - 작업: `src/constants/routes.ts`(경로 상수화, web-andrsen `navigateList` 참고하되 role/guard 제외) + `src/main.tsx`에 `createBrowserRouter`(object 배열 config — `element: <RootLayout />`로 Header/GNB 공유, `children: [{path:"/"}, {path:"/favorites"}, {path:"/error", ErrorPage}, {path:"*", NotFoundPage}]`), `NuqsAdapter`(`nuqs/adapters/react-router/v8`) 연결
+  - 작업: `src/constants/routes.ts`(경로 상수화, 레퍼런스의 `navigateList` 참고하되 role/guard 제외) + `src/main.tsx`에 `createBrowserRouter`(object 배열 config — `element: <RootLayout />`로 Header/GNB 공유, `children: [{path:"/"}, {path:"/favorites"}, {path:"/error", ErrorPage}, {path:"*", NotFoundPage}]`), `NuqsAdapter`(`nuqs/adapters/react-router/v8`) 연결
   - 작업: `error.response?.status`가 critical(401/403/404/503/기타 5xx) 범위일 때 `/error` 이동 메커니즘 결정 필요(Phase 진입 시 PAAR) — 후보: 페이지별 ErrorBoundary + React Query `throwOnError` vs QueryCache 전역 `onError` + imperative navigate. (Step 2.1에서 폐기한 `ApiError` 클래스 없이, status 값을 이 시점에 직접 판정)
   - 작업(성능 후보, PAAR 후 확정): `/favorites`를 `React.lazy`+`Suspense`로 코드 스플리팅 — 초기 번들에서 찜 페이지 코드 제외, Lighthouse Performance 기여
   - 검증: 두 라우트 진입 확인 + `path: "*"` 미매치 라우트 NotFound 렌더 확인 + critical 에러 스텁 발생 시 `/error` 이동 확인
@@ -215,16 +215,16 @@ sequenceDiagram
 - **react-router v8**(v7 아님): v7→v8은 non-breaking upgrade, react-router v6 EOL, nuqs 2.9.0부터 v8 어댑터 지원 확인 [PAAR 2026-07-08]
 - **react-hook-form + zod 미채택**: 상세검색 폼이 3개 고정 옵션 select 1개뿐이라 검증 대상 자체가 없음(과잉 엔지니어링). `useState`로 대체 [PAAR 2026-07-08]
 - **axios 채택**(fetch 아님): 호출 지점 1곳뿐이지만 인터셉터 기반 에러 정규화 패턴이 axios가 더 명확 [PAAR 2026-07-08]
-- **ESLint 9.39.1 고정**(latest 10.x 아님): `eslint-plugin-react`가 ESLint 10 미지원(OPEN 이슈), vxt-fashion-admin 레퍼런스와 동일 버전 [PAAR 2026-07-08, [[project-cdri-eslint10-compat-gotcha]]]
+- **ESLint 9.39.1 고정**(latest 10.x 아님): `eslint-plugin-react`가 ESLint 10 미지원(OPEN 이슈), Next.js 어드민 레퍼런스와 동일 버전 [PAAR 2026-07-08, [[project-cdri-eslint10-compat-gotcha]]]
 - **oxlint 미채택**: Vite 스캐폴딩 기본값이었으나 이 프로젝트 규모에선 속도 이점 무의미 + 필요 규칙(jsx-a11y 등) 생태계가 ESLint 대비 아직 좁음 [PAAR 2026-07-08]
 - **ESLint/Prettier 역할 분리**(eslint-plugin-prettier 통합 안 함): Prettier 공식 권고 + 저장 시 자동 포맷은 VSCode "format on save"로 이미 달성 [PAAR 2026-07-08]
 - **prettier-plugin-tailwindcss 추가**(레퍼런스엔 없음): tv() 슬롯에 Tailwind 클래스를 대량 사용해 자동 정렬 이점이 확실함 [PAAR 2026-07-08]
 - **eslint-plugin-jsx-a11y 추가**(레퍼런스엔 없음): 이 과제는 접근성이 평가/우대 축(원티드 우대사항) [PAAR 2026-07-08]
-- **Husky `"prepare": "husky"` 명시 추가**: vxt-fashion-admin 레퍼런스가 이 스크립트 누락으로 클론 시 훅이 비활성이었던 문제를 보완 [2026-07-08]
+- **Husky `"prepare": "husky"` 명시 추가**: Next.js 어드민 레퍼런스가 이 스크립트 누락으로 클론 시 훅이 비활성이었던 문제를 보완 [2026-07-08]
 - 커밋lint 제외, conventional commits 수동 준수: 개인 과제 오버헤드 최소화 (husky+lint-staged만)
 - 전역 상태 라이브러리 미도입: RQ+nuqs+localStorage+Context로 충분 — "필요 없음의 근거" 자체를 README에 기술
 - **에러 UX 2분류**(critical→에러 페이지 / recoverable→토스트): 카카오 API 에러 응답의 `code`/`errorType` 세부 분기는 하지 않고 **HTTP status만으로** 판단(백엔드 데이터가 보장하는 건 status뿐). 401/403/404/503/기타 5xx=critical, 400·네트워크에러=recoverable(네트워크 전용 분기 없이 단순 통합). 실응답 바디는 라이브 curl로 `{errorType,message}` 확인(문서의 `{code,msg}` 표와 다름) [U 2026-07-08] → Phase 3 Toast, Phase 4 `/error` 라우트 신설
-- **`src/lib/api/` 폴더 구조 절충**(web-andrsen + vxt-fashion-admin 비교): `client/` 서브폴더 제거(axios 인스턴스는 `index.ts`) — vxt-fashion-admin의 `lib/api/client` vs `app/api`(진짜 Next.js 서버) 대응 구조를 그대로 베꼈던 것인데, 우리는 서버 자체가 없어 대응 대상이 없음. 대신 도메인별 `api.interface.ts` 분리는 채택(기존 "타입은 사용 파일에 인라인" 컨벤션의 명시적 예외) — 공유 타입은 `shared/{request,response}.ts`. `api.exception.ts`는 지금 빈 파일로 안 만들고 실제 필요 생기면 추가 [U 2026-07-08]
+- **`src/lib/api/` 폴더 구조 절충**(레퍼런스 프로젝트 두 곳 비교): `client/` 서브폴더 제거(axios 인스턴스는 `index.ts`) — Next.js 어드민 레퍼런스의 `lib/api/client` vs `app/api`(진짜 Next.js 서버) 대응 구조를 그대로 베꼈던 것인데, 우리는 서버 자체가 없어 대응 대상이 없음. 대신 도메인별 `api.interface.ts` 분리는 채택(기존 "타입은 사용 파일에 인라인" 컨벤션의 명시적 예외) — 공유 타입은 `shared/{request,response}.ts`. `api.exception.ts`는 지금 빈 파일로 안 만들고 실제 필요 생기면 추가 [U 2026-07-08]
 
 ## 발견 사항 / backlog
 
