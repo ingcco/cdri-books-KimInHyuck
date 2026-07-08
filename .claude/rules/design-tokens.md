@@ -2,7 +2,7 @@
 description: "디자인 토큰 전역화 범위 — Figma Style 레이어가 명시 정의한 값만 @theme 전역 토큰, 나머지는 컴포넌트 스코프."
 paths:
   - "src/index.css"
-  - "src/components/ui/**"
+  - "src/components/**"
 ---
 
 # 디자인 토큰 — 전역화 판단 원칙

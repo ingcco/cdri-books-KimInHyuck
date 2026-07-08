@@ -94,15 +94,15 @@ export type PageVariants = typeof pageVariants;
 
 ## Raw HTML 지양 — 자체 UI 컴포넌트 사용
 
-폼 컨트롤·인터랙티브 요소는 raw HTML 대신 `components/ui/`의 자체 컴포넌트를 사용한다. 시각 일관성 + a11y 기본기(focus ring, aria)를 컴포넌트가 보장한다.
+폼 컨트롤·인터랙티브 요소는 raw HTML 대신 `components/`의 자체 컴포넌트를 사용한다. 시각 일관성 + a11y 기본기(focus ring, aria)를 컴포넌트가 보장한다. 배럴(`index.ts`) 없이 컴포넌트 파일을 직접 import(`conventions.md` "공용 컴포넌트 export" 참조).
 
-| 지양 패턴                    | 대체 컴포넌트          | import                     |
-| ---------------------------- | ---------------------- | -------------------------- |
-| `<button>`                   | `Button`               | `@/components/ui/button`   |
-| `<input>` (검색/텍스트)      | `Input`                | `@/components/ui/input`    |
-| `<select>`, `<option>`       | `Dropdown`             | `@/components/ui/dropdown` |
-| `<input type="checkbox">`    | `Checkbox`             | `@/components/ui/checkbox` |
-| 커스텀 모달                  | `Modal` (자체 Compound)| `@/components/ui/modal`    |
+| 지양 패턴                    | 대체 컴포넌트          | import                              |
+| ---------------------------- | ---------------------- | ------------------------------------ |
+| `<button>`                   | `Button`               | `@/components/button/Button`         |
+| `<input>` (검색/텍스트)      | `Input`                | `@/components/input/Input`           |
+| `<select>`, `<option>`       | `Dropdown`             | `@/components/dropdown/Dropdown`(flat props 또는 `Dropdown.Trigger`/`.Content`/`.Item` compound, 둘 다 지원) |
+| `<input type="checkbox">`    | `Checkbox`             | `@/components/checkbox/Checkbox`     |
+| 커스텀 모달                  | `Modal` (자체 Compound)| `@/components/modal/Modal`           |
 
 **예외 (허용)**:
 - `<label htmlFor>` + 커스텀 폼 필드(textarea 등 자체 컴포넌트 미지원) 페어링은 WCAG 3.3.2 a11y 의무로 허용
@@ -114,9 +114,12 @@ export type PageVariants = typeof pageVariants;
 
 ## 자체 컴포넌트 스타일 오버라이드 규칙
 
-- 자체 UI 컴포넌트에 `className`으로 **variant가 담당하는 시각 스타일 우회 금지**
-  - 금지: `<Button variant="outline" className="text-red-600 border-red-300" />` → variant에 없으면 variant를 추가
-  - 허용: `className="w-full"`, `className="flex-1"` 등 **레이아웃 유틸리티만**
+기본형 컴포넌트를 만들고 variant는 무한정 선제적으로 추가하지 않는다. 화면에 필요한 스킨은 **`className` 오버라이드**(또는 Search/Popover처럼 감싸는 전용 컴포넌트의 자체 style 파일)로 우선 해결한다.
+
+- **즉흥적 우회는 금지, 이름 있는 컴포넌트의 소유는 허용**
+  - 금지: 페이지/도메인 코드 아무 곳에서나 `<Input className="rounded-full ...">` 처럼 즉흥적으로 스킨을 박아넣는 것
+  - 허용: `Search`(`components/input/search/`)처럼 이름 있는 합성 컴포넌트가 자기 `{Component}.style.ts`에서 `className`으로 베이스 컴포넌트에 스킨을 입히는 것 — 이 경우 스킨의 SOT가 그 컴포넌트 하나로 응집되므로 우회가 아니라 정당한 합성
+- **variant 승격은 자동이 아니라 상의 후 결정** — 같은 오버라이드 패턴이 반복되면(기준: `conventions.md` "자체 컴포넌트·유틸 우선 사용 3회 룰"과 동일하게 3곳 이상) 그때 사용자와 상의해 formal variant로 승격할지 판단한다. "없으면 무조건 variant 추가"가 아님
 - **시맨틱 색상 토큰 전용** — raw Tailwind 색상(`bg-blue-100`, `text-blue-600` 등) 사용 금지
   - `@theme` 시맨틱 토큰만 사용: `primary`, `foreground`, `muted`, `destructive` 등
   - 해당 토큰이 없으면 → `@theme`에 추가
@@ -128,7 +131,7 @@ export type PageVariants = typeof pageVariants;
 
 ## 파일 구조 규약
 
-- `src/components/` (루트) = **2곳 이상의 라우트에서 import되는** 공유 컴포넌트만 (`src/components/ui/`, `src/components/layout/` 등)
+- `src/components/` (루트) = **2곳 이상의 라우트에서 import되는** 공유 컴포넌트만. `ui`/`layout` 같은 중간 서브폴더 없이 `src/components/{name}/`로 바로 둔다(불필요한 폴더 뎁스 금지, 2026-07-08)
 - 단일 라우트에서만 쓰는 컴포넌트 → 해당 페이지 슬라이스의 `components/` 하위
 - 페이지는 항상 **폴더 슬라이스 구조** (`src/pages/SearchPage/SearchPage.tsx`), 라우트 등록은 react-router
 - 자체 컴포넌트를 불필요하게 래핑하는 중간 레이어 생성 금지

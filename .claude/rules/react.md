@@ -194,7 +194,7 @@ export const SEARCH_ERRORS = {
 
 ## UI 컴포넌트 패턴 (`components/**`)
 
-자체 UI 컴포넌트(`components/ui/**`) 작성 시 Hook 내부 순서:
+자체 UI 컴포넌트(`components/**`) 작성 시 Hook 내부 순서:
 
 1. Props 구조분해
 2. Refs
@@ -380,7 +380,7 @@ interface DetailSearchModalProps {
 }
 ```
 
-**모달 쉘**: `components/ui/modal`의 자체 Compound 컴포넌트로 통일(ESC·backdrop·scroll lock·focus 복원). 각 모달이 이 로직을 수기 반복하지 않는다. a11y 요건(`role="dialog"`, `aria-modal`, focus trap)은 `accessibility.md` 참조.
+**모달 쉘**: `components/modal`의 자체 Compound 컴포넌트로 통일(ESC·backdrop·scroll lock·focus 복원). 각 모달이 이 로직을 수기 반복하지 않는다. a11y 요건(`role="dialog"`, `aria-modal`, focus trap)은 `accessibility.md` 참조.
 
 ## Form 바인딩 — Controller 통일
 

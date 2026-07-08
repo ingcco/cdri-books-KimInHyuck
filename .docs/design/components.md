@@ -28,9 +28,12 @@
 - 입력 텍스트 `#222222`. `type="search"`, label 시각숨김
 - 팝업용 underline variant: 하단 1px (`divider`, focus 시 `primary`)
 
-### Select
-- 네이티브 `<select>` + 커스텀 chevron(`icon` 색). 옵션: 제목/저자명/출판사
-- 값 텍스트 body2-bold. underline `divider`
+### Dropdown
+- 네이티브 `<select>` 대신 자체 구현(vxt-fashion-admin 참고 — WAI-ARIA APG "select-only combobox" 패턴: `role="combobox"` trigger + `aria-activedescendant` + `role="listbox"`/`role="option"`). 옵션: 제목/저자명/출판사(도메인 리스트는 `constants/dropdownList.ts`에서 주입, Dropdown 자체는 도메인 무지)
+- vxt와 동일하게 **compound(`Dropdown.Trigger`/`.Content`/`.Item`) + flat(`list`/`value`/`onChange`) 둘 다 지원** — Root가 `list` prop 유무로 내부 분기(있으면 Trigger+Content+Item 자동 조립, 없으면 `children` compound 렌더). vxt의 `SearchInput`/`Checkbox`/`CheckboxGroup`/`Group`/`Label`/`Separator`/`Empty`는 지금 화면에 다중선택·검색필터·그룹 요구가 없어 제외(2026-07-08)
+- 키보드 이동은 vxt와 동일하게 DOM(`[role="option"]`) 순서 기준 — Root가 compound 자식 목록을 미리 알 수 없어도 동작하게 하기 위함(compound 모드 지원의 핵심 전제)
+- 값 텍스트 body2-bold. underline 1px(`#D2D6DA`, 비-토큰), 커스텀 chevron(`#B1B8C0`, 비-토큰, 열림 시 회전, Figma 벡터 `chevron-down.svg`)
+- 2026-07-08: `react.md`/`conventions.md`가 이미 "Dropdown"으로 명명해온 것과 일치시킴(기존 Figma 주석의 "Select" 표기와 달랐던 부분 정정)
 
 ### Popover
 - anchor 하단, 360×160, r8, shadow, 우상단 X(`icon`)
@@ -63,9 +66,10 @@
 
 ```
 app/
-├─ components/                  # 공용 (도메인 무지)
-│  ├─ Header/ Button/ Input/ Select/ Popover/
-│  ├─ LikeButton/ EmptyState/ Skeleton/ ResultCount/
+├─ components/                   # 공용 (도메인 무지, ui/layout 서브폴더 없이 바로 둠 — page.md 규약)
+│  ├─ button/ input/ input/search/ popover/
+│  ├─ dropdown/                  # compound: components/{Trigger,Content,Item}.tsx + hooks/useDropdown.ts
+│  ├─ likebutton/ emptystate/ skeleton/ resultcount/ header/ toast/ modal/
 ├─ book/ (공유 도메인 컴포넌트)  # BookList, BookListItem — 검색·찜 2페이지 공유
 ├─ page.tsx                     # 도서 검색: hooks/useBookSearch + SearchBar, DetailSearchPopover
 └─ favorites/page.tsx           # 내가 찜한 책: hooks/useFavorites (BookList 재사용)

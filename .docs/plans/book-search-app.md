@@ -122,10 +122,13 @@ sequenceDiagram
 
 ### Phase 3: 공용 UI 컴포넌트 (Figma 1:1)
 
-- [ ] Step 3.1: Button(3 variants×4 sizes) / Input(pill+underline) / Select
+- [x] Step 3.1: Button(asChild+variant) / Input(base, shape는 Search/Popover 합성으로) / Search(Input 합성, pill) / Dropdown(네이티브 select 대신 자체 구현, vxt-fashion-admin 참고)
   - 검증: check-types + 데모 조합 렌더
-- [ ] Step 3.2: Popover(포커스 트랩+Esc+외부클릭) / LikeButton(SVG 하트, aria-pressed) / EmptyState / Skeleton / ResultCount / Toast(recoverable 에러 알림 — `error.response?.status` 기반 분기 소비, 2026-07-08 설계 확정으로 신설. 최초 안이었던 `ApiError.severity`는 Step 2.1에서 과잉설계로 폐기)
-  - 검증: LikeButton·Popover RTL 테스트 (키보드 조작), Toast 자동 dismiss·중첩 큐잉 확인
+- [ ] Step 3.2: **전역 자격 컴포넌트만 — Toast + System Modal** (재스코핑 2026-07-08)
+  - Toast(recoverable 에러 알림 — `error.response?.status` 기반 분기 소비. 최초 안이었던 `ApiError.severity`는 Step 2.1에서 과잉설계로 폐기) / Modal(시스템팝업 — Figma 미명시, `react.md` "모달 쉘" Compound 패턴: ESC·backdrop·scroll lock·focus 복원)
+  - Toast/Modal 상태(큐잉 등)는 React 내장 Context+useReducer로 — 별도 상태관리 라이브러리 미도입(CLAUDE.md 전역 상태 미사용 방침과 동일)
+  - **전역에서 제외 → 페이지 지역 컴포넌트/이연 (사용자 판단 2026-07-08)**: LikeButton·EmptyState·ResultCount는 재사용성 없음 → 실제 사용 페이지 슬라이스의 `components/`로(Phase 4). Popover는 현재 확실한 사용처 없음 → 필요 확인 시 정의. Skeleton은 API 응답 속도 보고 도입 여부 판단(보류)
+  - 검증: Modal RTL 테스트(키보드 조작·focus trap), Toast 자동 dismiss·중첩 큐잉 확인
 - [ ] Step 3.3: Header (GNB, `NavLink` aria-current, 반응형)
   - 검증: /review-ui (토큰 준수·정렬)
   - 결정 필요(Phase 진입 시): 각 컴포넌트의 공용(`src/components/`) vs 페이지 로컬 배치는 **2곳 이상 라우트에서 쓰이는지**로 판단(`page.md` 기준) — 지금 미리 정하지 않고 실제 사용처 확정 후 결정
@@ -184,7 +187,7 @@ sequenceDiagram
 | `index.html`, `src/{main,App}.tsx`, `src/index.css`, `vite.config.ts` 등 스캐폴딩              | 완료 |
 | `eslint.config.js`, `.prettierrc`, `.prettierignore`, `.husky/*`, `lint-staged.config.js`      | 완료 |
 | `src/lib/api/index.ts`, `src/lib/api/{books,favorites}/*`, `src/lib/api/shared/*`, `src/lib/storage/*` | 신규 |
-| `src/components/{Button,Input,Select,Popover,LikeButton,EmptyState,Skeleton,ResultCount,Header,Toast}/*` | 신규 |
+| `src/components/{button,input,input/search,dropdown,popover,likebutton,emptystate,skeleton,resultcount,header,toast,modal}/*` | 신규 (barrel 없음, default export) |
 | `src/components/book/{BookList,BookListItem}/*`                                                | 신규 |
 | `src/pages/{SearchPage,FavoritesPage,ErrorPage}/*`                                             | 신규 |
 | `src/__tests__/{unit,integration}/*`, `e2e/*`, `vitest.*.config.ts`, `playwright.config.ts`     | 신규 |

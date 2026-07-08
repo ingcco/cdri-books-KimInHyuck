@@ -77,6 +77,24 @@ export default SearchPage;
 export default function SearchPage() { ... }
 ```
 
+## 공용 컴포넌트(`src/components/`) export — default export, 배럴 금지 (2026-07-08)
+
+`src/components/{name}/`(button, input, dropdown 등)의 각 컴포넌트는 페이지 컴포넌트와 동일하게 **const 선언식 + `export default`**. `index.ts` 배럴 파일은 만들지 않는다 — 무조건 re-export하는 배럴은 트리쉐이킹에 불리할 수 있어(번들러가 배럴 전체를 하나의 모듈로 취급하기 쉬움) 각 컴포넌트 파일에서 직접 import한다.
+
+```typescript
+// src/components/button/Button.tsx
+const Button = (props: ButtonProps) => { ... };
+export default Button;
+export interface ButtonProps { ... }   // 타입은 named export — 배럴 없이도 같은 파일에서 함께 import 가능
+
+// 소비처
+import Button, { type ButtonProps } from "@/components/button/Button";
+```
+
+- 컴포넌트 자체 = `export default` (hook은 기존대로 named export 유지, 위 "Hook 파일 네이밍" 참조)
+- Props 타입은 named export로 같은 파일에 유지 — 타입은 컴파일 타임에 소거되므로 트리쉐이킹 우려 자체가 없음
+- `{name}Variants`(tv 스타일 함수)도 `.style.ts`에서 named export, 컴포넌트 파일이 직접 import — 배럴을 거치지 않음
+
 ## `{Name}Page.tsx` 조건부 렌더링 — 단일 return
 
 페이지 컴포넌트(`{Name}Page.tsx`)는 early return 금지. 로딩·에러·빈 상태를 포함한 모든 분기는 단일 `return ()` 안에서 JSX 조건부 렌더링으로 처리한다.
@@ -351,7 +369,7 @@ export function useBookSearchHook() { ... }
 
 ## 자체 컴포넌트·유틸 우선 사용 (3회 룰)
 
-페이지·도메인 코드에서 새 헬퍼·컴포넌트·훅을 작성하기 전에 이미 `src/components/ui/`, `src/lib/utils/`, `src/hooks/`에 동일 기능이 있는지 먼저 확인한다.
+페이지·도메인 코드에서 새 헬퍼·컴포넌트·훅을 작성하기 전에 이미 `src/components/`, `src/lib/utils/`, `src/hooks/`에 동일 기능이 있는지 먼저 확인한다.
 
 ### 빈도 기준 결정 트리
 
@@ -359,15 +377,15 @@ export function useBookSearchHook() { ... }
 | --------------------- | --------------------------------------------------------------------- |
 | **이미 있음**         | **자체 구현 금지** — 기존 함수/컴포넌트 import 의무                    |
 | 1~2회 사용            | 호출처에 인라인 (최소 추상화 원칙 — 3곳 미만 인라인)                   |
-| 3회 이상 사용         | `src/lib/utils/`·`src/components/ui/`·`src/hooks/`로 승격 후 호출처 일괄 교체      |
+| 3회 이상 사용         | `src/lib/utils/`·`src/components/`·`src/hooks/`로 승격 후 호출처 일괄 교체      |
 
 - 날짜 포맷·숫자 콤마·debounce 등 반복 유틸은 자체 재구현하지 말고 `src/lib/utils/`에 단일 SOT로 두고 재사용. 기본 포맷·옵션은 통일해 표기 일관성 확보
-- 폼 컨트롤(button/input/select 등)은 raw HTML 대신 `components/ui/`의 자체 컴포넌트 사용 — 상세는 `page.md` "Raw HTML 지양"
+- 폼 컨트롤(button/input/dropdown 등)은 raw HTML 대신 `components/`의 자체 컴포넌트 사용 — 상세는 `page.md` "Raw HTML 지양"
 
 ### 자체 승격 절차 (3회 이상 누적 시)
 
 1. 호출처 3곳 grep으로 검증 (`grep -rn '동일 패턴' src/`)
-2. `src/lib/utils/`·`src/components/ui/`·`src/hooks/`로 승격
+2. `src/lib/utils/`·`src/components/`·`src/hooks/`로 승격
 3. 호출처 일괄 교체 + 인라인 잔재 grep 검증
 
 ## JSDoc 컨벤션
