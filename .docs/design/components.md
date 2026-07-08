@@ -18,33 +18,34 @@
 
 ## 2. 공용 컴포넌트 (components/) 상세
 
-### Button
-- variants: `primary`(#4880EE fill, white 텍스트) / `outline`(stroke #8D94A0, 텍스트 subtitle — 상세검색) / `gray`(#F2F4F6 fill, 텍스트 secondary — 상세보기)
-- sizes: `sm`(72×35, body2) / `md`(115×48, caption) / `lg`(240×48) / 팝업용 full-width 36
-- radius 8 공통. `ComponentProps<"button">` 확장 + tv() variants + 우측 아이콘 슬롯(chevron)
+### Button (실측 2026-07-08)
+- variants: `primary`(#4880EE fill, #FFFFFF 텍스트) / `outline`(stroke #8D94A0 1px, 텍스트 #8D94A0 — 상세검색) / `gray`(#F2F4F6 fill, 텍스트 #6D7582 — 상세보기)
+- sizes: `sm`(72×35, pad[5,10,5,10], 14/500) / `md`(115×48, pad[13,20,13,20] gap10, 16/500) / `lg`(240×48, 16/500) / 팝업 full(312×36, pad[5,10], 14/500)
+- radius 8 공통. `ComponentProps<"button">` 확장 + tv() variants + 우측 아이콘 슬롯(chevron 14×8 #B1B8C0)
 
-### Input
-- pill(radius 100, `light-gray` 배경, 좌측 검색 아이콘), placeholder `text-subtitle` 16
-- 입력 텍스트 `#222222`. `type="search"`, label 시각숨김
-- 팝업용 underline variant: 하단 1px (`divider`, focus 시 `primary`)
+### Input (실측 2026-07-08)
+- pill(radius 100, `#F2F4F6` 배경, pad[10,0,10,10]), 좌측 검색 아이콘 30×30(벡터 20×20 `#353C49`), 아이콘→텍스트 gap 11
+- placeholder 16/500 `#8D94A0`, 입력 텍스트 `#222222`. `type="search"`, label 시각숨김
+- 팝업용 underline variant: 208×36, 하단 1px, 활성 `#4880EE`(primary)·비활성 `#D2D6DA`
 
-### Dropdown
-- 네이티브 `<select>` 대신 자체 구현(vxt-fashion-admin 참고 — WAI-ARIA APG "select-only combobox" 패턴: `role="combobox"` trigger + `aria-activedescendant` + `role="listbox"`/`role="option"`). 옵션: 제목/저자명/출판사(도메인 리스트는 `constants/dropdownList.ts`에서 주입, Dropdown 자체는 도메인 무지)
-- vxt와 동일하게 **compound(`Dropdown.Trigger`/`.Content`/`.Item`) + flat(`list`/`value`/`onChange`) 둘 다 지원** — Root가 `list` prop 유무로 내부 분기(있으면 Trigger+Content+Item 자동 조립, 없으면 `children` compound 렌더). vxt의 `SearchInput`/`Checkbox`/`CheckboxGroup`/`Group`/`Label`/`Separator`/`Empty`는 지금 화면에 다중선택·검색필터·그룹 요구가 없어 제외(2026-07-08)
-- 키보드 이동은 vxt와 동일하게 DOM(`[role="option"]`) 순서 기준 — Root가 compound 자식 목록을 미리 알 수 없어도 동작하게 하기 위함(compound 모드 지원의 핵심 전제)
-- 값 텍스트 body2-bold. underline 1px(`#D2D6DA`, 비-토큰), 커스텀 chevron(`#B1B8C0`, 비-토큰, 열림 시 회전, Figma 벡터 `chevron-down.svg`)
-- 2026-07-08: `react.md`/`conventions.md`가 이미 "Dropdown"으로 명명해온 것과 일치시킴(기존 Figma 주석의 "Select" 표기와 달랐던 부분 정정)
+### Dropdown (실측 2026-07-08)
+- 네이티브 `<select>` 대신 자체 구현(WAI-ARIA APG "select-only combobox": `role="combobox"` trigger + `aria-activedescendant` + `role="listbox"`/`role="option"`). 옵션: 제목/저자명/출판사(도메인 리스트는 `constants/dropdownList.ts` 주입, Dropdown은 도메인 무지)
+- **compound(`Dropdown.Trigger`/`.Content`/`.Item`) + flat(`list`/`value`/`onChange`) 둘 다 지원** — Root가 `list` prop 유무로 분기
+- 키보드 이동은 DOM(`[role="option"]`) 순서 기준
+- **팝오버 트리거 실측(중요)**: 박스 아님 — **borderless** 100×36, 값 텍스트 14/**700** `#353C49`, chevron 10×6 `#B1B8C0`(열림 시 회전), 하단 언더라인 100×1 `#D2D6DA`. → 팝오버 전용 스킨(variant 또는 전용 컴포넌트 소유). 기본 박스 사용처 회귀 금지.
 
-### Popover
-- anchor 하단, 360×160, r8, shadow, 우상단 X(`icon`)
+### Popover (실측 2026-07-08)
+- anchor 하단, 360×160, r8, `#FFFFFF`, shadow, pad 좌우 24
+- 우상단 close 20×20(내부 X 12×12 `#B1B8C0`)
+- 내부: [borderless 드롭다운 100 + gap4 + underline input 208] 행 → gap16 → 검색하기 312×36
 - 외부 클릭/Esc 닫힘, 포커스 트랩, `role="dialog"` + `aria-label`
 
 ### LikeButton
 - 24×24 SVG 하트 토글: fill `#E84118` / line `#DADAda` — Figma 벡터 재작성
 - `<button aria-pressed>` + 시각숨김 라벨 "찜하기". 썸네일 우상단 오버레이(리스트 16, 아코디언 24)
 
-### EmptyState
-- 원형 아이콘(80) + 문구 caption `text-secondary`. 문구: "검색된 결과가 없습니다." / "찜한 책이 없습니다."
+### EmptyState (실측 2026-07-08)
+- 아이콘 80×80 + gap **24** + 문구 16/500 `#6D7582`(text-secondary). 콘텐츠 영역 중앙. 문구: "검색된 결과가 없습니다." / "찜한 책이 없습니다."
 
 ### Skeleton *(디자인 미명시 → 지원자 판단: 로딩 UX·CLS 방지 근거)*
 - BookListItem 형태 스켈레톤. 무한 스크롤 후속 페이지 로딩에도 사용

@@ -3,6 +3,7 @@
 > 출처(정확도 순): ① **Figma REST API 실측** (파일 `VHM0w7IBWLaaCJp0l9Mkff`, lastModified 2024-10-02) ② Figma export PNG 픽셀 샘플링 ③ 화면 관찰.
 > 아래 값은 전부 ①에서 추출한 노드 원본 값이며, ②로 교차 검증됨.
 > **재검증 완료 (2026-07-08)**: "Style" 컴포넌트(node `753:96`)를 REST API로 재조회 — 색상 9종 **값**은 기존 문서와 100% 일치(실제 목업 화면 node `18:805`에서 사용된 색상도 전부 이 9종 안에서만 커버됨, 미정의 색상 0건). 타이포는 lh 값 보완(§2 갱신 — 특히 `small` lh는 기존 문서의 16이 오기, 실제 base 값은 10).
+> **전 화면 재실측 (2026-07-08, figma-visual-parity)**: 6개 프레임 auto-layout·좌표·per-character 색 override 전량 재추출 — 색 9종·타이포 8종 **값 전부 유효**(변경 없음). 화면별 요소 px는 `screens.md` "실측 정합 SOT" 참조. 발견: ① 카운트 "총 N건"의 숫자만 `primary` per-char override(라벨은 `#353C49`) ② Header 탭 active/inactive **색 동일**(`#353C49`), 구분은 언더라인만(→ Header 구현 이슈, tokens 무관).
 > **네이밍 정정 (2026-07-08)**: `src/index.css` 구현이 토큰 **이름**을 Figma 원본과 다르게 붙였던 것을 발견(`red`→`like`, `gray`→`like-off`, `black`→`input-text`로 임의 변경 + Style 9종에 없는 `icon`/`divider`/`title-black`을 전역 토큰으로 추가) — 전부 Figma 원본 명칭 1:1로 되돌리고, 9종 밖 색상은 전역 토큰에서 제거(§1 "비-토큰 색" 절 참조).
 
 ## 1. 색상
