@@ -52,7 +52,8 @@
 
 - unit: 순수 함수·훅 (Vitest jsdom)
 - integration: API 계층 함수 + React Query 훅을 MSW(`dapi.kakao.com` 스텁)로 검증 (Vitest node)
-- e2e: Playwright — 검색→결과→찜→찜 목록 핵심 여정
+- e2e: Playwright — ① 기능 여정(검색→결과→찜) ② **시각 정합**(DOM 실측 vs Figma). 상세 패턴은 `.claude/rules/e2e-parity.md`(e2e/** 스코프)
+- 테스트 기준(AC) SOT: `.docs/spec/requirements.md`(요구사항별 `WHEN→THEN`+레벨, `[F]/[N]/[판단]/[추가]` 분류) · 시각 px SOT: `.docs/design/screens.md`(Figma 실측)
 - 커밋 전 `pnpm lint && pnpm check-types && pnpm test:unit` 통과 필수
 
 ## 행동 원칙

@@ -513,4 +513,4 @@ new QueryCache({
 
 - **dedicated 훅**(`useBookListVirtualizer`)이 `scrollRef`를 소유(Context 미경유, 위 "ref는 dedicated 훅이 소유" 참조) + `measureElement`로 동적 높이(아코디언 확장 등) 실측 + 마지막 가상 아이템 도달 시 `fetchNextPage`.
 - **내부 스크롤 앱셸**: window 스크롤 대신 리스트 컨테이너가 스크롤 엘리먼트가 되게 — 루트 `h-dvh flex-col` → 스크롤 영역 `flex-1 min-h-0 overflow-y-auto`. `useWindowVirtualizer`의 `scrollMargin` 복잡도를 피한다.
-- 소량 고정 목록(찜 페이지 등 페이지네이션)은 가상화하지 않는다(오버헤드 > 이득).
+- 찜 페이지도 최대 개수 제한이 없어(로컬 저장 한도까지 증가) 같은 `useBookListVirtualizer`를 **재사용**한다 — `onLoadMore`는 서버 fetch 대신 로컬 청크(10개) reveal. 별도 무한 스크롤 훅을 새로 만들지 않는다(스크롤 패턴 단일화). 진짜 소량·고정 목록만 가상화 생략.
