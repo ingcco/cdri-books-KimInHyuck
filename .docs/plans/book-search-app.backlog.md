@@ -28,6 +28,10 @@
 | F-11 | 개발 중이라 지금은 상관없지만 add-dir로 참고한 레퍼런스 프로젝트 실명이 제출용 레포에 남는 걸 숨기고 싶다는 지시 — 단 `.claude/`(스킬·규칙)는 이번엔 손대지 말고, `.docs/`(plan+backlog)와 `src/`+설정 파일(주석) 기준으로 전수조사할 것 (2026-07-08) | on | `.docs/plans/book-search-app.{md,backlog.md}`에서 web-andrsen/vxt-fashion-admin/web-vxt 실명 15곳 익명화("Vite/react-router 레퍼런스"/"Next.js 어드민 레퍼런스"), `tsconfig.{app,node}.json`의 스캐폴딩 주석 2건 제거, `src/`·`CLAUDE.md`는 이미 클린 확인. `.claude/`는 지시대로 미변경(여전히 실명 다수 잔존) | ✅ |
 | F-12 | Phase 4 리뷰 후속 — HomePage 슬라이스 재구성 8건(2026-07-08): (A) tv 레이아웃 `styles/page.style.ts`(container/wrapper, web-vxt 참고) (B) `HomePageContent`+`Context.Provider` 분리·SearchSection/ResultSection 조립(web-andrsen) (C) searchHandler+historyHandler→`homeHandler` 통합 (D) 파생상태 `hasBooks`(원안 useMemo) (E) storage 폴더 폐기→`src/utils/localStorage.ts` 순수함수(getLocalStorage/setLocalStorage)+`constants/localStorageKey.ts` (F) `useSearchHistory`를 `src/hooks/` 공통 훅으로 승격(재사용 대비 레이어 분리, 과설계 가능성 인지) (G) `api.queries.ts` options 오버라이드(`Omit<...,"queryKey"|"queryFn">`, vxt-fashion-admin) (H) useHome에 카카오 검색 params state(size:10 default) | on | PAAR 개별 논의 — A/B/C/E/G 수용 방향. **충돌 3건**: D(useMemo는 react.md "primitive useMemo 금지"+RX-12 위반→select/인라인), H(YAGNI+nuqs와 상태 SOT 이원화), F(과설계 인정한 결정—수용하되 useEffect deps 패턴 교정) | 🔵 논의 중 → 구현 완료(④는 placeholderData 함수형 대신 keepPreviousData 채택, 문서동기화 ship 대기) |
 | F-13 | Phase 4 리뷰 후속 2차(2026-07-08) 9건: (1) SearchBar Esc로 히스토리 팝업 닫기 (2) 히스토리 방향키 네비+호버/포커스 하이라이트(Figma 3000-647) (3) DetailSearchPopover의 useState/useEffect/ref/submit 전부 useHome 이관—컴포넌트는 Context 소비만 (4) ResultSection `isSearching`도 useHome 파생으로 (5) home/components 전반 비즈니스 로직 useHome 집중 (6) `styles/{Component}.style.ts` 1:1 매핑 (7) @tanstack/react-virtual 가상 스크롤 도입(DOM 누적 최적화) (8) localStorage 등 과한 방어로직 제거(가독성) (9) 헤더-본문 정렬 Figma 18-969/18-805 준수·중앙정렬 제거. +Dropdown onChange 타입(`Dispatch<SetStateAction<SearchTarget>>` vs `(string)=>void`) | on | 순서 제안: (8)방어제거→(3·4·5)아키텍처+Dropdown타입→(6)styles→(7)가상스크롤→(1·2)히스토리 UX[Figma]→(9)헤더[Figma]. Figma PAT 필요(2·9) | ①②③ 완료(8 방어제거 / 3·4·5 아키텍처=4슬롯·useSearchInput·useOutsideClick·Dropdown타입 / 6 styles 1:1). 부수결정: ④는 keepPreviousData, classnames-order eslint off(prettier SOT). **잔여: ④ 가상스크롤[설계논의]·⑤⑥[Figma review-ui 풀검수→구현, 상세검색 라인정렬 어긋남 지적]** | 🔵 진행 중 |
+| F-14 | web-vxt `packages/animation` 기준 transition 애니메이션 프리셋 도입(framer-motion). 병렬 세션(Figma검증·찜목록)과 충돌 회피 위해 별도 plan으로 (2026-07-08) | off | 사용자 "새로운 플래닝" 명시 → 즉시 분리: **`.docs/plans/animation-presets.md`**(+backlog A-1~4). 인프라만(충돌 0)·소유 파일 무수정 | 🔀 분리됨 |
+| F-15 | "내가 찜한 책 화면 만들자 — home 슬라이스 참고, 구현계획 체크 후 구현". Phase0 결정: 찜 페이지네이션 = **자동 무한 스크롤**(10개씩 append, IntersectionObserver, 가상화 없음 — 소량 로컬) (2026-07-08) | on | 현재 plan Step 4.3 구체화(4.3a~d) | ✅ |
+| F-16 | **BookListItem/EmptyState 공유 승격 반대** — "승격 안 함. 별도로 만들어 진행. 3곳 이상 안 겹치니 재사용 안 한다고 (README에) 밝힐 것. 찜은 도메인/데이터가 다르니(찜 목록 API·인터페이스) 재사용 컴포넌트가 맞지 않다." (2026-07-08) | on | Step 4.3 승격안(구 4.3a/b) 폐기 → 홈 무수정, 찜 지역 `FavoriteBookItem`+자체 빈상태(자기 Context 소비). 근거=3곳 룰(2<3)+CP-1+도메인 분리. 핸드오프 메모리 "승격" 지침 override. 파생 질문: 찜 타입 (a)BookData 재사용 vs (b)FavoriteBook 신설 | ✅ 타입=(b) `FavoriteBook` 신설 확정(스냅샷 DTO, useFavorites co-locate, `toFavoriteBook` 매핑) |
+| F-17 | 구현 중 2건 정정 지시: ① "로컬스토리지로 하는거 맞아?"(저장 방식 재확인) ② "왜 인피니트 스크롤? 버추얼 스크롤 써야하는거 아냐? home 체크한거 맞아?" — 찜도 홈처럼 가상화하라는 지적 (2026-07-08) | on | ① **A(localStorage 스냅샷) 확정** — 카카오 찜/상세조회 API 없음 문서검증(`/v3/search/book` 단일, 배치·단건조회 불가, isbn 10+13 공백결합), 백엔드 없는 CSR + [F]스펙. ② **F-15 '가상화 없음' 정정** — 무한스크롤(로드방식)과 비가상화(렌더방식) 혼동이었음 → 홈 `useBookListVirtualizer` 재사용으로 전환, `useInfiniteScroll` 폐기. react.md '찜 가상화 금지' 룰도 정정(📤 적용됨) | ✅ |
 
 ## ⏳ 별도 plan 후보 (off-topic — ship 시 분리 검토)
 
@@ -41,11 +45,16 @@
 |---|---|---|---|
 | H-1 | 데이터 계층에서 소비 UI 없이 에러 severity/메시지 분류부터 설계(F-7) → 이후 storage도 동일 패턴 재발 조짐(F-10에서 사용자가 직접 일반화) — 원칙화 | `karpathy-principles.md` "도서 검색 과제 적용 예시 4" 신규 행 | 📤 승격됨 |
 | H-2 | 레퍼런스 프로젝트 구조를 그 존재 이유 확인 없이 그대로 복사(F-6, `client/` 폴더 vestige) | `ai-defense.md` "레퍼런스 프로젝트 구조 맹목적 복사 금지" 신규 절 | 📤 승격됨 |
-| H-3 | 입력 버퍼(controlled input의 중간값 draft 등)는 페이지 Context(useHome)에 올리지 말고 컴포넌트 지역 훅(`useSearchInput`)으로 격리 — Context value 변경은 React.memo로 못 막아 모든 소비자 리렌더(F-13 ②) | `react.md` 참조 안정성/Context 절 | 후보 |
-| H-4 | ref를 Context value 객체에 담지 말 것 — `react-hooks/refs`(React19)가 render 중 ref 접근으로 플래그. 외부클릭/Esc는 `useOutsideClick` 훅으로 분리(F-13 ③) | `react.md` 또는 `anti-patterns.md` 신규 | 후보 |
-| H-5 | Tailwind 클래스 정렬은 `prettier-plugin-tailwindcss` 단독 SOT, eslint `tailwindcss/classnames-order`는 off — 두 도구 중복 정렬은 `--fix`로도 안 잡히는 충돌(F-13 ⑥) | `conventions.md` "ESLint/Prettier 역할 분리" 구체화 | 후보 |
-| H-6 | `useInfiniteQuery.data`는 타입상 항상 `TData\|undefined` — placeholderData 함수형으로 초기값 넣어도 소비처 `??` 못 없앰. `keepPreviousData + ?? EMPTY`가 `??` 최소 + 소비 컴포넌트 0개(F-13 ④) | `anti-patterns.md` RX-12 보강 | 후보 |
-| H-7 | 페이지 Context value 슬롯 네이밍은 컴포넌트 UI 1:1(searchBar/history/detailSearch/result) — 소비처가 자기 슬롯만 집어 응집(F-13 ②) | `page.md`/`react.md` Context 절 | 후보 |
+| H-3 | 입력 버퍼(draft)는 페이지 Context에 올리지 말고 컴포넌트 지역 훅(`useSearchInput`)으로 격리(F-13 ②) | `react.md` "컴포넌트 무상태 원칙"(입력버퍼 격리) | 📤 승격됨 (2026-07-08) |
+| H-4 | ref를 Context value에 담지 말 것 — `react-hooks/refs`(React19) render 중 플래그. dedicated 훅이 소유·반환(F-13 ③) | `react.md` "ref는 dedicated 훅이 소유" + `anti-patterns.md` RX-15 | 📤 승격됨 |
+| H-5 | Tailwind 클래스 정렬 `prettier-plugin-tailwindcss` 단독 SOT, eslint `classnames-order` off(F-13 ⑥) | `conventions.md` "Tailwind 클래스 정렬 — Prettier 단독 SOT" | 📤 승격됨 |
+| H-6 | `useInfiniteQuery.data`=`TData\|undefined` → `keepPreviousData + ?? EMPTY`가 `??` 최소(F-13 ④) | `anti-patterns.md` RX-12 보강 | 📤 승격됨 |
+| H-7 | 페이지 Context 슬롯 네이밍 = 컴포넌트 UI 1:1(searchBar/history/result)(F-13 ②) | `react.md` "컴포넌트 무상태 원칙"(Context 슬롯 1:1) | 📤 승격됨 |
+| H-8 | 컴포넌트 분할 4신호(재사용/자체상태·계약/독립분기/부모가독성붕괴) + 공유=props·페이지지역=context 조회 (세션) | `page.md` "컴포넌트 분할·배치 기준" | 📤 승격됨 |
+| H-9 | React Query v5 per-query onError 없음 → QueryCache onError + `meta.errorMessage` 엔드포인트 귀속 (세션) | `react.md` "에러 처리 — v5는 per-query onError 없음" | 📤 승격됨 |
+| H-10 | 가상화(`useBookListVirtualizer`)+내부스크롤 앱셸(`h-dvh`→`flex-1 min-h-0 overflow-y-auto`) (세션) | `react.md` "가상 스크롤·앱셸" | 📤 승격됨 |
+| H-11 | 페이지 스타일 파일 `{Name}.style.ts`+`{name}Variants`(pageVariants 통일 폐기) (세션) | `page.md`·`conventions.md` 네이밍 | 📤 승격됨 |
+| H-12 | RX-13 완화 — empty를 BookList `empty` prop 대신 페이지 단일-return 분기로(conventions 단일 return과 정합). **미승격**(RX-13과 정면 충돌 조정 필요, 다음 harness-up) | `anti-patterns.md` RX-13 조정 | 후보 |
 
 ## ⏳ 미결 (별도 plan/시점)
 

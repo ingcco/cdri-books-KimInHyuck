@@ -145,10 +145,16 @@ sequenceDiagram
   - 작업: `src/pages/SearchPage/{SearchPage.tsx,hooks/useSearch.ts,components/,styles/}` — SearchBar(기록 8개), DetailSearchPopover(상호배타 로직, `useState` 기반), BookList(무한스크롤 IntersectionObserver), BookListItem(아코디언 단일 열림), nuqs `?q=&target=`
   - 작업(Step 2.3에서 이연된 검색기록 구현, 2026-07-08 합의): `src/lib/storage/searchHistory.ts` — 검색 **실행**(Enter/제출) 시점에만 기록(실시간 fetch debounce와 별개 이벤트), 중복이면 기존 항목 제거 후 맨 앞 재추가, max 8 FIFO, 빈 문자열 trim 가드
   - 검증: 브라우저 수동 확인 + RTL 통합(검색→결과→아코디언) + 검색기록 unit 테스트(중복 재정렬, FIFO, 빈 문자열 가드)
-- [ ] Step 4.3: 찜 페이지
-  - 작업: `src/pages/FavoritesPage/{FavoritesPage.tsx,hooks/useFavorites.ts}` — BookList 재사용, 클라 페이지네이션(10개), 빈 상태
-  - 작업(Step 2.3에서 이연된 찜 구현, 2026-07-08 합의): `src/lib/utils/localStorage.ts`(범용 getItem/setItem) + `src/lib/storage/favorites.ts`(도메인 함수) + `src/lib/storage/useFavorites.ts`(공유 훅, SearchPage 하트 아이콘과 FavoritesPage 둘 다 사용 — **React Query 미사용**, react-router가 라우트 전환 시 이전 페이지를 언마운트하므로 동시 마운트 동기화 니즈 자체가 없음. `useState(() => getFavorites())` 로 충분)
-  - 검증: 찜 토글 ↔ 목록 동기화 확인 + 찜 storage unit 테스트(토글, 브라우저 환경 아닌 곳 no-throw)
+- [ ] Step 4.3: 찜 페이지 (`/favorites`) — home 슬라이스 패턴 **참고**, 컴포넌트는 재사용 승격 없이 찜 슬라이스 독립 (F-15/F-16, 2026-07-08)
+  - 결정(Phase 0, F-15): 페이지네이션 = 렌더=**가상화(홈 `useBookListVirtualizer` 재사용)** + 로드=**자동**(마지막 아이템 도달 시 10개씩 reveal). F-15의 '가상화 없음'은 무한스크롤(로드방식)과 비가상화(렌더방식)를 혼동한 것 — 찜은 최대개수 없어 커질 수 있고 훅이 이미 있어 재사용이 정답(F-17 정정). [U 2026-07-08]
+  - 결정(F-16): `BookListItem`/`EmptyState` **공유 승격 안 함** — 홈+찜 2곳(<3곳 룰 위반) + 찜은 자체 도메인 + CP-1(미묘한 차이 시 중복 허용). ⇒ **홈 코드 무수정**(surgical). 찜은 자체 아이템/빈상태 컴포넌트가 `useFavoritesPageContext()`를 소비(page.md "페이지지역=context 조회", 홈 BookListItem이 useHomeContext 쓰는 것과 동형). 핸드오프 메모리의 "승격" 지침을 override
+  - 전제: `src/hooks/useFavorites.ts`(하트 상태 SOT, `favoriteHandler{isFavorite,toggle}`)는 **홈·찜 공유 유지** — 진짜 공유 상태(홈이 쓰고 찜이 읽음, 분리 불가). 찜 데이터 = 카카오 `BookData`를 **클릭 시점 스냅샷**으로 저장(**A** — 카카오는 찜/상세조회 API 없음: `/v3/search/book` 단일 엔드포인트·배치/단건조회 불가·isbn은 10+13 공백결합이라 재조회 부적합, [F] 스펙도 '클릭 시점 스냅샷' 지정, 카카오 문서 검증완료). 도메인 타입 = **`FavoriteBook` 신설**(b) — 찜 UI 렌더 필드만 큐레이션(isbn/title/contents/url/authors/price/sale_price/thumbnail), `src/hooks/useFavorites.ts`에 `FavoriteBook`+`toFavoriteBook(book)` co-locate. `favorites: FavoriteBook[]`, `toggle(book: BookData)`가 매핑 저장 → **홈은 `toggle(book)`만 호출해 무수정**. localStorage 용량(≈5MB)·권당 ~1KB라 최대개수 무제한도 비이슈, 방어로직 미추가(F-13 방침) [U 2026-07-08]
+  - [x] Step 4.3a: (F-17) 신규 스크롤 훅 안 만듦 — 홈 `useBookListVirtualizer` **그대로 재사용**(count=books.length / hasNextPage=hasMore / onLoadMore=loadMore). 범용 behavior 훅이라 컴포넌트 재사용 논쟁과 무관. `useInfiniteScroll`은 만들었다 폐기(2번째 스크롤 패턴 제거)
+  - [x] Step 4.3b: `src/pages/favorites/hooks/useFavoritesPage.ts` — `useFavorites()`(src/hooks) 재사용 + 클라 페이지네이션(`visibleCount` state, `loadMore`=useCallback[] 안정화→observer effect deps) + 아코디언 단일 열림(`openIsbn`) + Context(useHome과 동일 선언순서). result 슬롯: `books/totalCount/isEmpty/hasMore/loadMore/openIsbn/toggleOpen/favorite`
+  - [x] Step 4.3c: `src/pages/favorites/components/FavoriteBookItem.tsx` — 찜 지역 아이템(자기 Context 소비, `book` prop만). 홈 BookListItem과 시각적으로 유사하나 도메인 독립(의도적 중복). leaf(하트/썸네일/구매/상세토글)는 같은 파일 지역 컴포넌트
+  - [x] Step 4.3d: `src/pages/favorites/FavoritesPage.tsx`(`FavoritesContext.Provider` + `FavoritesPageContent`: h1 + count + 빈상태/리스트 + sentinel `<div>`) + `styles/FavoritesPage.style.ts`(`favoritesPageVariants`, 내부 스크롤 앱셸 `scrollArea: overflow-y-auto`). 리스트는 일반 `<ul>/<li>`. 빈상태는 찜 자체 컴포넌트(Figma 757:1435 — 홈과 다른 프레임)
+  - 가정(Figma 744:313/757:1435 미실측 → review-ui 대조): count/title = h1 "내가 찜한 책" + "총 N건", 빈 문구 "찜한 책이 없습니다."
+  - 검증: 브라우저 — ①홈 하트 토글→`/favorites` 반영 ②스크롤 하단 도달 시 10개씩 자동 append ③아코디언 단일 열림 ④하트 해제 시 목록에서 즉시 제거 ⑤빈 상태. `pnpm check-types && pnpm lint`. `useFavorites` 토글 unit(선택)
 - [ ] Step 4.4: 메타데이터 (SEO 대체 — 결정 필요, Phase 1 요구사항 참조)
   - 작업: PAAR로 확정 후 착수 — `document.title` 동적 갱신(react-router loader 또는 useEffect) 정도로 축소할지, 아예 생략할지
 - [ ] Step 4.5: 반응형 마감
