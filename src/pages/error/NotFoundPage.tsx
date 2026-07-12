@@ -1,7 +1,6 @@
 import { Link } from "react-router";
 import { ROUTES } from "@/constants/routes";
 
-// 미매치 경로(*) catch-all — 홈으로 복귀 링크.
 const NotFoundPage = () => {
   return (
     <div className="mx-auto flex w-full max-w-[960px] flex-col items-center gap-y-3 py-20 text-center">

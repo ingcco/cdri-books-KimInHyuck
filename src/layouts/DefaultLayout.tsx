@@ -1,8 +1,7 @@
 import { NuqsAdapter } from "nuqs/adapters/react-router/v8";
 import { Outlet } from "react-router";
-import Header from "./component/Header";
+import Header from "./components/Header";
 
-// 공유 레이아웃 — Header(GNB) + 페이지 Outlet.
 // NuqsAdapter는 useSearchParams/useNavigate 훅에 의존하므로 RouterProvider 컨텍스트 안이어야 한다.
 // 라우트 element(=router 트리 내부)인 이 레이아웃에서 Outlet을 감싸 모든 페이지가 nuqs를 쓸 수 있게 한다.
 const DefaultLayout = () => {

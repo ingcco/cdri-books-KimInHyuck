@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 // ============================================================
-// Figma 실측 상수 (screens.md "실측 정합 SOT" 1:1) — 정합 기준의 SOT
+// Figma 실측 상수 — 정합 기준의 SOT
 // ============================================================
 export const RGB = {
   primary: "rgb(72, 128, 238)", // #4880EE

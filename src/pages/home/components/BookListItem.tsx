@@ -9,7 +9,6 @@ import type { BookData } from "@/lib/api/books/api.interface";
 import { toComma } from "@/utils/number";
 import { resolveBookPrice } from "@/utils/price";
 
-// 하트 토글 — 아이콘 전용 버튼(Button chrome 불필요), 찜 상태 a11y 계약 캡슐화
 const LikeButton = ({
   isFavorite,
   size,
@@ -36,7 +35,6 @@ const LikeButton = ({
   );
 };
 
-// 썸네일 + 하트 오버레이 (collapsed 48×68/하트16, expanded 210×280/하트24)
 const BookThumbnail = ({
   book,
   variant,

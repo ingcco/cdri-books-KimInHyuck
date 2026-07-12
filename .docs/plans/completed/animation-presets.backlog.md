@@ -15,7 +15,7 @@
 
 | # | 받은 피드백 | 주제 | 라우팅 | 상태 |
 |---|---|---|---|---|
-| A-1 | web-vxt `packages/animation` 기준 transition 정도의 간단한 애니메이션 중 적용할 것 체크해 가져가자. framer-motion(react-framer) 설치 예상. 구조는 `src/lib/animation/index.ts` 어떻냐 (2026-07-08) | on | Phase 1 — 단, `index.ts` barrel 대신 `transition.ts`로(성격 분리·no-barrel). 텍스트 이펙트 8종 제외 | ✅ |
+| A-1 | 외부 레퍼런스 `packages/animation` 기준 transition 정도의 간단한 애니메이션 중 적용할 것 체크해 가져가자. framer-motion(react-framer) 설치 예상. 구조는 `src/lib/animation/index.ts` 어떻냐 (2026-07-08) | on | Phase 1 — 단, `index.ts` barrel 대신 `transition.ts`로(성격 분리·no-barrel). 텍스트 이펙트 8종 제외 | ✅ |
 | A-2 | 스코프는 1번(인프라+데모 검증, 실제 적용 X → 충돌 0)으로 (2026-07-08) | on | plan 전체 스코프 확정, Phase 1~2 | ✅ |
 | A-3 | interaction은 하지 말 것 — 페이지 적어 Tailwind 클래스 직접, 복잡하면 `index.css`. 필요하면 프리셋만 체크 (2026-07-08) | on | interaction 프리셋 미구현, plan "적용 후보 매트릭스"에 hover 체크 문서화만 | ✅ |
 | A-4 | 클로드 세션 3개 병렬(1.Figma 검증 2.찜 목록 3.애니메이션=본 세션) — 다른 것 최대한 안 꼬이도록 체크 (2026-07-08) | on | 신규 파일만 생성·데모 독립 entry·소유 파일 무수정으로 충돌 0 설계. Pre-mortem에 pnpm lock 조율 기록 | ✅ |

@@ -3,8 +3,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useSearchHistory } from "./useSearchHistory";
 import { LOCAL_STORAGE_KEY } from "@/constants/localStorageKey";
 
-// 검색어마다 별도 act로 감싸 리렌더를 유발한다 — add는 렌더 시점 history 클로저를 읽으므로
-// 실제 사용(사용자 입력=개별 이벤트=개별 렌더)과 동일하게 렌더 사이에 상태가 누적된다.
 const read = () =>
   JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY.SEARCH_HISTORY) ?? "[]") as string[];
 

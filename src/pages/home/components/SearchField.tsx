@@ -54,7 +54,6 @@ const SearchHistoryList = ({
 
 const SearchField = () => {
   const { filters, searchBar, history } = useHomeContext();
-  // 상호배타 — 상세검색(target) 활성 시 통합검색 입력은 비운다(HomePage의 key 리셋으로 재초기화)
   const { inputRef, draft, activeIndex, isHistoryOpen, selectHistory, clear, inputHandler } =
     useSearchInput({
       initialValue: filters.target ? "" : filters.q,
@@ -67,7 +66,6 @@ const SearchField = () => {
     <div className={styles.searchArea()}>
       <Search
         ref={inputRef}
-        // 히스토리 열림 시 pill 하단을 각지게 + 링 제거 → 아래 히스토리 박스와 하나로 이어짐
         containerClassName={
           isHistoryOpen ? "rounded-t-[24px] rounded-b-none focus-within:ring-0" : undefined
         }

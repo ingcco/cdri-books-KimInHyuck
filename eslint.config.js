@@ -11,7 +11,6 @@ import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 
 export default tseslint.config(
-  // .claude/**는 하네스(스킬/스크립트) 전용 — 앱 eslint 대상 아님(node 스크립트라 브라우저 globals와 불일치)
   { ignores: ["dist", "node_modules", "coverage", "playwright-report", ".claude/**"] },
   { settings: { react: { version: "detect" } } },
   js.configs.recommended,

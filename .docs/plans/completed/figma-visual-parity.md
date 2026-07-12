@@ -4,7 +4,7 @@
 
 ## 목표
 
-Figma(파일 `VHM0w7IBWLaaCJp0l9Mkff`, **1920×1080 고정 기준**) 실측을 SOT로 삼아 6개 화면의 px·간격·색·타이포·레이아웃을 근사값→실측값으로 정합시키고, **Playwright DOM 실측 assertion**으로 정합을 회귀 방지 게이트로 잠근다.
+Figma(**1920×1080 고정 기준**) 실측을 SOT로 삼아 6개 화면의 px·간격·색·타이포·레이아웃을 근사값→실측값으로 정합시키고, **Playwright DOM 실측 assertion**으로 정합을 회귀 방지 게이트로 잠근다.
 
 ## 배경 (3 Whys)
 
@@ -25,7 +25,7 @@ Figma(파일 `VHM0w7IBWLaaCJp0l9Mkff`, **1920×1080 고정 기준**) 실측을 S
 - `.docs/design/{tokens,components,screens}.md` 존재 — 색 9종·타이포 8종은 검증 완료, 그러나 **화면별 요소 px·간격은 부분적/근사**(screens.md "❌ 수정 필요" 4건 명시)
 - 구현: 홈(검색) 수직 슬라이스 + 찜 페이지 + 공용 컴포넌트(Button/Input/Dropdown/Search/Toast) 완비. Header는 `mx-[160px] gap-x-[400px] gap-x-8`로 근사
 - Playwright: `@playwright/test` 설치만 됨 — **config·spec·script 전무** → 신규 셋업 필요
-- Figma 접근: MCP 미연결, REST API + PAT(세션 한정, 파일 저장 금지) — 파서 검증 완료(auto-layout gap/padding/좌표/색/타이포 추출 가능)
+- Figma 접근: MCP 미연결, REST API — 파서 검증 완료(auto-layout gap/padding/좌표/색/타이포 추출 가능)
 
 ## Figma 실측 SOT (Phase 0 추출 — 검증 완료분)
 
@@ -170,7 +170,7 @@ flowchart TD
 ## 실패 위험 (Pre-mortem)
 
 - [ ] Figma API rate-limit(과거 발생) → Phase A에서 배치 페치 + 스크래치패드 캐시, 재페치 최소화
-- [ ] PAT 만료(~2026-07-14 추정) → **Phase A에서 필요한 추출을 앞당겨 일괄 완료**
+- [ ] 접근 토큰 만료 → **Phase A에서 필요한 추출을 앞당겨 일괄 완료**
 - [ ] 파서가 per-character 색 override 누락(카운트 숫자) → Step A.1에서 파싱 보강 후 색 확정
 - [ ] 1920 고정 전환 시 기존 반응형 유틸(max-w/mx-auto) 제거로 레이아웃 붕괴 → 콘텐츠 960 중앙(left480@1920) 정확 복제, 헤더 풀폭+고정 인셋
 - [ ] Playwright flaky(폰트/API/애니메이션) → 카카오 API mock + fonts ready 대기 + 애니메이션 비활성 + ±1~2px 허용
@@ -181,7 +181,7 @@ flowchart TD
 
 - Phase 0 Clarify 결과: **1920×1080 고정 기준, 반응형 미고려**(사용자) / Playwright는 **DOM 실측 assertion**(사용자)
 - Figma는 SOT, `.docs/design`은 중간 SOT — 실측이 문서와 다르면 문서를 실측으로 갱신 후 구현 정합
-- PAT는 세션에만 존재 — 파일/커밋/메모리 저장 금지(Figma 접근 방침)
+- 접근 토큰은 세션에만 존재 — 파일/커밋/메모리 저장 금지(Figma 접근 방침)
 
 ## 발견 사항 / backlog
 

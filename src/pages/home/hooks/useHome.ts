@@ -16,7 +16,6 @@ const useHomeContext = () => {
 };
 
 const useHome = () => {
-  // URL이 검색 상태의 SOT — 새로고침/뒤로가기/링크 공유에 검색어·대상 복원
   const [filters, setFilters] = useQueryStates({
     q: parseAsString.withDefault(""),
     target: parseAsString.withDefault(""),
@@ -36,7 +35,6 @@ const useHome = () => {
   const [detailTarget, setDetailTarget] = useState<SearchTarget>("title");
   const [detailQuery, setDetailQuery] = useState("");
 
-  // 검색 실행 — 메인은 target 초기화, 상세는 target 지정 (상호배타) + 기록 추가
   const runSearch = (query: string, target: SearchTarget | "") => {
     const trimmed = query.trim();
     if (!trimmed) return;
@@ -69,7 +67,6 @@ const useHome = () => {
     close: () => setIsDetailOpen(false),
   };
 
-  // 아코디언 단일 열림 — 열린 항목의 isbn 하나만 보관
   const [openIsbn, setOpenIsbn] = useState<string | null>(null);
 
   const hasBooks = data.documents.length > 0;

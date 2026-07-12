@@ -122,7 +122,6 @@ grep -rEn "error\.(config|request)|JSON\.stringify\(error\b" src 2>/dev/null
 면접관이 직접 읽는 코드다. `src/**`·설정 파일에 다른 프로젝트/조직명, Figma 노드 ID·PAT, "재검증"/"발견" 같은 작업 로그성 주석이 남아있지 않은지 확인(`.claude/hooks/guard-source-hygiene.sh`가 Write/Edit 시점에 이미 차단하지만, 그 이전에 작성된 내용은 별도 확인 필요).
 
 ```bash
-grep -rniE "web-andrsen|vxt-fashion-admin|klleon|hururup" src eslint.config.js vite.config.ts package.json .env.example index.html 2>/dev/null
 grep -rEn "figd_[A-Za-z0-9_-]+" . --include="*.ts" --include="*.tsx" --include="*.js" --include="*.json" --include="*.md" 2>/dev/null | grep -v node_modules
 ```
 

@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isFavorite, toggleFavorite } from "./favorites";
 
-// 검색 결과(BookData)는 FavoriteBook의 구조적 상위 타입 — 잉여 필드를 포함시켜
-// 큐레이션(toFavoriteBook)이 렌더 필드만 남기는지 검증한다.
 const book = (isbn: string) => ({
   isbn,
   title: `제목-${isbn}`,
@@ -12,7 +10,6 @@ const book = (isbn: string) => ({
   price: 10000,
   sale_price: 9000,
   thumbnail: "https://img.example/1.jpg",
-  // FavoriteBook에 없는 잉여 필드 — 스냅샷에서 제거돼야 함
   datetime: "2020-01-01T00:00:00.000+09:00",
   publisher: "출판사",
   translators: [],

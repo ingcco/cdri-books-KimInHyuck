@@ -1,6 +1,6 @@
 # 화면 레이아웃 실측 — certicos Books (Figma REST API)
 
-> 출처: Figma REST API 실측 (파일 `VHM0w7IBWLaaCJp0l9Mkff`, lastModified 2024-10-02). **2026-07-08 전 화면 재실측**(auto-layout gap/padding·프레임상대 좌표·per-character 색 override 포함).
+> 출처: Figma REST API 실측 (lastModified 2024-10-02). **2026-07-08 전 화면 재실측**(auto-layout gap/padding·프레임상대 좌표·per-character 색 override 포함).
 > **review-ui / Playwright DOM 정합의 SOT** — 재페치 대신 이 문서에서 대조한다. 기준: **1920×1080 고정, 반응형 미고려**.
 > 콘텐츠 컬럼 = **960px 중앙정렬** → content-left = **480 @1920**. (일부 아트보드가 476/516으로 미세 오차 → 주 레퍼런스 `18:805` 기준 480 채택.)
 

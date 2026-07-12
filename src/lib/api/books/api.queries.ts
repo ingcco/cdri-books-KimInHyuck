@@ -11,7 +11,6 @@ import type { BookData, BookListParams } from "./api.interface";
 
 export const PAGE_SIZE = 10;
 
-// select가 페이지를 평탄화한 소비용 형태
 export interface BookListResult {
   documents: BookData[];
   meta: Response<BookData>["meta"];

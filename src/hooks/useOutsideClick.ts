@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 
-// 열림 상태에서 바깥 클릭 / Esc 시 onClose 호출. 대상 엘리먼트 ref를 반환한다.
 export const useOutsideClick = <T extends HTMLElement>(isOpen: boolean, onClose: () => void) => {
   const ref = useRef<T>(null);
 

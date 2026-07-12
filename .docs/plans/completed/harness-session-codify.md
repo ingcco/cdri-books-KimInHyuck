@@ -1,6 +1,6 @@
 # harness-session-codify — 세션 규칙 승격
 
-> 상태: ✅ 완료 (2026-07-09 ship). harness-up(방법론만 차용, VXT 스킬 → cdri-books 치환).
+> 상태: ✅ 완료 (2026-07-09 ship). harness-up(방법론만 차용, 외부 스킬 → cdri-books 치환).
 
 ## 목표
 

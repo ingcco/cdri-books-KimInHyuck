@@ -6,8 +6,6 @@ import { router } from "@/router";
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    // 전역은 "critical → 에러 페이지 이동"(횡단 관심사)만 담당한다.
-    // recoverable 토스트 문구는 각 쿼리가 meta.errorMessage로 소유(엔드포인트 귀속).
     onError: (error, query) => {
       if (classifyQueryError(error) === "critical") {
         void router.navigate(ROUTES.error);

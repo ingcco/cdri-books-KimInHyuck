@@ -122,7 +122,7 @@ sequenceDiagram
 
 ### Phase 3: 공용 UI 컴포넌트 (Figma 1:1)
 
-- [x] Step 3.1: Button(asChild+variant) / Input(base, shape는 Search/Popover 합성으로) / Search(Input 합성, pill) / Dropdown(네이티브 select 대신 자체 구현, vxt-fashion-admin 참고)
+- [x] Step 3.1: Button(asChild+variant) / Input(base, shape는 Search/Popover 합성으로) / Search(Input 합성, pill) / Dropdown(네이티브 select 대신 자체 구현, Next.js 어드민 레퍼런스 참고)
   - 검증: check-types + 데모 조합 렌더
 - [ ] Step 3.2: **전역 자격 컴포넌트만 — Toast + System Modal** (재스코핑 2026-07-08)
   - Toast(recoverable 에러 알림 — `error.response?.status` 기반 분기 소비. 최초 안이었던 `ApiError.severity`는 Step 2.1에서 과잉설계로 폐기) / Modal(시스템팝업 — Figma 미명시, `react.md` "모달 쉘" Compound 패턴: ESC·backdrop·scroll lock·focus 복원)

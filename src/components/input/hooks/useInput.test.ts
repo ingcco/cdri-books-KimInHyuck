@@ -3,7 +3,6 @@ import type { KeyboardEvent } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { useInput } from "./useInput";
 
-// 훅이 참조하는 필드만 담은 최소 KeyboardEvent 스텁
 const keyEvent = (key: string, isComposing: boolean) =>
   ({ key, nativeEvent: { isComposing } }) as unknown as KeyboardEvent<HTMLInputElement>;
 

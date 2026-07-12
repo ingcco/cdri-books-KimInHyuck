@@ -2,7 +2,6 @@ import { m } from "framer-motion";
 import { Link, NavLink } from "react-router";
 import { ROUTES } from "@/constants/routes";
 
-// Figma `Header`(1920×80) 1:1 — 로고 좌측 + 탭 중앙(우측 여백). 활성 탭 밑줄은 layoutId로 탭 간 슬라이드.
 const NAV_ITEMS = [
   { to: ROUTES.home, label: "도서 검색", end: true },
   { to: ROUTES.favorites, label: "내가 찜한 책", end: false },

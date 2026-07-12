@@ -1,8 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { makeBooks, mockBookApi } from "./fixtures";
 
-// 검색 UX 후속(F-11~14) 동작 검증 — 네이티브 type=search 동작/스크롤/blur은 jsdom 단위테스트로
-// 재현 불가라 실제 브라우저(Playwright)로 확인한다.
+// 네이티브 type=search 동작/스크롤/blur은 jsdom 단위테스트로 재현 불가라
+// 실제 브라우저(Playwright)로 확인한다.
 test.describe("검색 UX 동작", () => {
   test.beforeEach(async ({ page }) => {
     await mockBookApi(page, { documents: makeBooks(20), totalCount: 20, isEnd: true });

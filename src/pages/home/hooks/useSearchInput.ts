@@ -1,8 +1,5 @@
 import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 
-// 검색창 입력 버퍼 + 히스토리 키보드 네비게이션(페이지 전용 dedicated 훅).
-// draft를 페이지 Context에 올리면 키 입력마다 소비자 전원이 리렌더되므로 컴포넌트 지역에 격리한다.
-// 실행된 검색어(filters.q)는 useHome이 소유하고, 입력 중 값·포커스·활성 인덱스는 여기서 관리한다.
 interface UseSearchInputParams {
   initialValue: string;
   historyList: string[];
@@ -38,7 +35,6 @@ export const useSearchInput = ({
     setActiveIndex(-1);
   };
 
-  // 검색어 지우기(clear 버튼 전용) — 값만 비우고 포커스는 유지한다.
   const clear = () => {
     setDraft("");
     inputRef.current?.focus();
@@ -70,7 +66,6 @@ export const useSearchInput = ({
       const picked = activeIndex >= 0 ? historyList[activeIndex] : undefined;
       if (picked) selectHistory(picked);
       else onSearch(draft);
-      // 검색 실행 후 히스토리 popover를 닫는다(blur → onBlur에서 상태 정리).
       inputRef.current?.blur();
     },
     onFocus: () => setIsFocused(true),

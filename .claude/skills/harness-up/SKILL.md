@@ -6,7 +6,7 @@ effort: high
 
 # /harness-up — 하네스 지속 개선
 
-> **이 프로젝트 특성**: Vite + React CSR **단독 사전과제**(모노레포/`packages/`·copy-template 아님). VXT류 "템플릿 범용성 필터"는 적용하지 않는다. 대신 **면접관이 읽는 코드**라는 특성 + Karpathy "과엔지니어링 금지"(`.claude/rules/karpathy-principles.md`) + **보안 불변식**(카카오 키 노출·`.env` 커밋 금지, CLAUDE.md)을 도입 필터로 쓴다.
+> **이 프로젝트 특성**: Vite + React CSR **단독 사전과제**(모노레포/`packages/`·copy-template 아님). 대형 모노레포 템플릿류의 "범용성 필터"는 적용하지 않는다. 대신 **면접관이 읽는 코드**라는 특성 + Karpathy "과엔지니어링 금지"(`.claude/rules/karpathy-principles.md`) + **보안 불변식**(카카오 키 노출·`.env` 커밋 금지, CLAUDE.md)을 도입 필터로 쓴다.
 > 기본 워크플로우(CLAUDE.md): 모든 변경은 `.docs/plans/` 문서 → 체크리스트 → `/ship` 루프. harness-up도 예외 아님.
 
 ## 트리거
@@ -30,7 +30,7 @@ effort: high
 find .claude -type f | sort
 wc -l CLAUDE.md .claude/rules/*.md
 ls .claude/skills/ .claude/rules/ .claude/agents/ 2>/dev/null
-ls ~/.claude/projects/-Users-apple-git-cdri-books-KimInHyuck/memory/*.md
+ls ~/.claude/projects/<project>/memory/*.md
 ```
 
 현황표(skills/rules/agents/hooks 수 + 이슈) + 프로젝트 특성(단독 CSR 앱·면접 제출·보안 불변식·React19/Tailwind v4 스택). 이 현황이 Step 2 "현재 상태" 컬럼의 근거.
@@ -92,13 +92,13 @@ plan(`.docs/plans/harness-*.md`)=실행 추적(ship 후 `completed/`), changelog
 | 스킬 크기 | 각 SKILL.md < 500줄 |
 | 메모리 | MEMORY.md 인덱스 ↔ `memory/*.md` 정합 |
 
-> VXT의 MCP Deferred/packages/8영역 정량 점수는 이 프로젝트에 불필요 — 위 4개만 본다.
+> 대형 모노레포 템플릿의 MCP Deferred/packages/8영역 정량 점수는 이 프로젝트에 불필요 — 위 4개만 본다.
 
 #### 7.1 메모리 stale 체크
 
 ```bash
-ls ~/.claude/projects/-Users-apple-git-cdri-books-KimInHyuck/memory/*.md | xargs -n1 basename | sort > /tmp/mem-actual.txt
-grep -oE '\(([a-z0-9_-]+\.md)\)' ~/.claude/projects/-Users-apple-git-cdri-books-KimInHyuck/memory/MEMORY.md | tr -d '()' | sort -u > /tmp/mem-index.txt
+ls ~/.claude/projects/<project>/memory/*.md | xargs -n1 basename | sort > /tmp/mem-actual.txt
+grep -oE '\(([a-z0-9_-]+\.md)\)' ~/.claude/projects/<project>/memory/MEMORY.md | tr -d '()' | sort -u > /tmp/mem-index.txt
 diff /tmp/mem-actual.txt /tmp/mem-index.txt
 ```
 

@@ -35,7 +35,7 @@
 
 ### 네이밍
 
-- [ ] [m·Con] 요청 함수: `get{Domain}List`/`get{Domain}`(단건) 등 web-andrsen 컨벤션 정렬 (예: `getBookList`)
+- [ ] [m·Con] 요청 함수: `get{Domain}List`/`get{Domain}`(단건) 네이밍 관례 (예: `getBookList`)
 - [ ] [m·Con] 쿼리 훅: `use{Domain}ListQuery` / `use{Domain}ListInfiniteQuery`
 - [ ] [m·Con] 응답 타입: 카카오 도서 API 응답 shape과 1:1 (`meta`, `documents`)
 

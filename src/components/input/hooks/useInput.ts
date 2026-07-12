@@ -4,7 +4,6 @@ import type { ChangeEvent, KeyboardEvent } from "react";
 interface UseInputParams {
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
-  /** IME(한글) 조합 확정용 Enter를 제외한 실제 Enter 입력 시 호출 */
   onEnter?: (event: KeyboardEvent<HTMLInputElement>) => void;
 }
 

@@ -13,7 +13,7 @@
 
 | # | 받은 피드백 | 주제 | 라우팅 | 상태 |
 |---|---|---|---|---|
-| F-1 | figd PAT로 전부 체크해 .docs/design 기준 px 정합 + 기획서 체크 + 모든 시각 부분 점검, 이후 Playwright로 UI 정합 | on | 현재 plan 전체(Phase A~C) | ✅ |
+| F-1 | Figma 실측으로 전부 체크해 .docs/design 기준 px 정합 + 기획서 체크 + 모든 시각 부분 점검, 이후 Playwright로 UI 정합 | on | 현재 plan 전체(Phase A~C) | ✅ |
 | F-2 | 반응형 미고려, Figma 1920×1080 기준으로만 진행 | on | plan 요구사항/결정 사항 | ✅ |
 | F-3 | Playwright 검증 = DOM 실측 assertion | on | Phase C | ✅ |
 | F-4 | requirements.md도 Figma 파란밴드 원문 + **코드 의도적 추가 감사**로 정확화 → unit/e2e 기준 문서화 | on(F-1 "기획서 체크" 연장) | requirements.md 재작성([F]/[N]/[판단]/[추가]+AC/레벨) | ✅ |

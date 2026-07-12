@@ -10,8 +10,6 @@ import { toComma } from "@/utils/number";
 
 const styles = homePageVariants();
 
-// 가상 스크롤 결과 목록 — 소비처(HomePageContent)가 새 검색마다 검색키로 key를 부여해 재마운트하면
-// virtualizer가 새로 생성되어 스크롤이 top에서 시작한다(이전 offset 복원 회피).
 const BookResultList = () => {
   const { result } = useHomeContext();
   const { scrollRef, virtualizer, virtualItems } = useVirtualScroll({

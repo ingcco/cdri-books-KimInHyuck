@@ -9,7 +9,6 @@ import type { FavoriteBook } from "@/lib/favorites/favorites";
 import { toComma } from "@/utils/number";
 import { resolveBookPrice } from "@/utils/price";
 
-// 하트 토글 — 아이콘 전용 버튼(Button chrome 불필요), 찜 상태 a11y 계약 캡슐화
 const LikeButton = ({
   isFavorite,
   size,
@@ -36,7 +35,6 @@ const LikeButton = ({
   );
 };
 
-// 썸네일 + 하트 오버레이 (collapsed 48×68/하트16, expanded 210×280/하트24)
 const BookThumbnail = ({
   book,
   variant,
@@ -90,8 +88,6 @@ const DetailToggle = ({
   </Button>
 );
 
-// 찜 지역 도서 아이템 — 홈 BookListItem과 시각적으로 유사하나 찜 도메인에 독립(의도적 중복).
-// FavoriteBook 스냅샷을 소비하고, 상태/핸들러는 찜 페이지 Context에서 조회한다.
 const FavoriteBookItem = ({ book }: { book: FavoriteBook }) => {
   const { result } = useFavoritesPageContext();
 
